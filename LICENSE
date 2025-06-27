@@ -1,13 +1,13 @@
-MIT License
+MIT License with Commercial Restriction
+Copyright (c) 2025 [Your Name]
 
-Copyright (c) 2025 EKINSOL
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction for non-commercial purposes, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software for personal, educational, research, or other non-commercial purposes, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Commercial Use Restriction: Commercial use of this Software, including but not limited to incorporating the Software into commercial products, offering commercial services based on the Software, or selling products that include or are derived from this Software, requires explicit written permission from the copyright holder.
+
+For the purposes of this license, "commercial use" means any use of the Software
+that is primarily intended for commercial advantage or monetary compensation,
+including use by for-profit entities in their business operations.
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
@@ -19,3 +19,5 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+Note: The copyright holder reserves the right to change this license at any time for future versions of the Software. Existing versions will remain under the license terms in effect at the time of their release.

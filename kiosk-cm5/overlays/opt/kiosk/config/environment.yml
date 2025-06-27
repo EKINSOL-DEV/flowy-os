@@ -1,0 +1,65 @@
+kiosk:
+  # System configuration
+  mode: production
+  debug: false
+  log_level: INFO
+  
+  # Update settings
+  update_interval: 3600  # Check for updates every hour
+  auto_update: true
+  update_repository: "https://github.com/your-org/kiosk-config.git"
+  
+  # Network settings
+  wifi:
+    auto_connect: true
+    fallback_ssid: "KioskSetup"
+    connection_timeout: 30
+    scan_interval: 300  # Scan for networks every 5 minutes
+  
+  # NFC settings
+  nfc:
+    enabled: true
+    timeout: 5000
+    retry_attempts: 3
+    device_path: "/dev/ttyUSB0"
+    
+  # API settings
+  apis:
+    host: "0.0.0.0"
+    nfc_port: 3001
+    nfc_api_port: 3002
+    network_port: 3003
+    
+  # Frontend settings
+  frontend:
+    port: 8080
+    cache_timeout: 3600
+    offline_mode: true
+    
+  # Browser settings
+  browser:
+    fullscreen: true
+    disable_dev_tools: true
+    disable_context_menu: true
+    auto_start: true
+    startup_delay: 5
+    
+  # Security settings
+  security:
+    ssh_enabled: true
+    ssh_port: 22
+    firewall_enabled: true
+    allowed_ports: [22, 80, 443]
+    
+  # Monitoring settings
+  monitoring:
+    health_check_interval: 60
+    log_rotation: true
+    max_log_size: "100MB"
+    max_log_files: 5
+    
+  # Hardware settings
+  hardware:
+    display_timeout: 0  # Never turn off display
+    cpu_governor: "performance"
+    gpu_memory: 128

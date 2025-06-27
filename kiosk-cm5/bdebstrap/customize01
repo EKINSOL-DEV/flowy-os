@@ -1,0 +1,49 @@
+#!/bin/bash
+# System packages and Docker setup
+
+set -e
+
+echo "Installing system packages and Docker..."
+
+# Update package lists
+apt-get update
+
+# Install Docker if not already installed
+if ! command -v docker &> /dev/null; then
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sh get-docker.sh
+    rm get-docker.sh
+fi
+
+# Enable Docker service
+systemctl enable docker
+
+# Install Python dependencies
+pip3 install --break-system-packages \
+    fastapi \
+    uvicorn \
+    websockets \
+    pyyaml \
+    requests \
+    aiofiles \
+    python-multipart
+
+# Install NFC Python library
+pip3 install --break-system-packages nfcpy
+
+# Create kiosk user if it doesn't exist
+if ! id "kiosk" &>/dev/null; then
+    useradd -m -s /bin/bash kiosk
+    echo "kiosk:kiosk123" | chpasswd
+    usermod -aG sudo,docker,dialout kiosk
+fi
+
+# Configure auto-login for kiosk user
+mkdir -p /etc/systemd/system/getty@tty1.service.d/
+cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf << EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin kiosk --noclear %I $TERM
+EOF
+
+echo "System packages and Docker setup completed."

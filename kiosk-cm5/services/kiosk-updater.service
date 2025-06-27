@@ -1,0 +1,15 @@
+[Unit]
+Description=Kiosk Update Service
+After=network.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory=/opt/kiosk
+ExecStart=/opt/kiosk/scripts/update.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

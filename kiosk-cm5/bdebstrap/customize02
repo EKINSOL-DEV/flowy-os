@@ -1,0 +1,54 @@
+#!/bin/bash
+# NFC libraries and Python environment setup
+
+set -e
+
+echo "Setting up NFC libraries and Python environment..."
+
+# Install NFC tools and libraries
+apt-get install -y \
+    libnfc6 \
+    libnfc-dev \
+    libnfc-bin \
+    libfreefare0 \
+    libfreefare-dev \
+    pcscd \
+    pcsc-tools
+
+# Configure NFC
+echo 'SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="072f", ATTRS{idProduct}=="2200", MODE="0664", GROUP="dialout"' > /etc/udev/rules.d/99-nfc.rules
+echo 'SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="04e6", ATTRS{idProduct}=="5591", MODE="0664", GROUP="dialout"' >> /etc/udev/rules.d/99-nfc.rules
+
+# Create NFC config directory
+mkdir -p /etc/nfc
+cat > /etc/nfc/libnfc.conf << EOF
+# Allow device auto-detection
+allow_autoscan = true
+allow_intrusive_scan = false
+log_level = 1
+
+# Device configuration
+device.name = "PN532 NFC Reader"
+device.connstring = "pn532_uart:/dev/ttyUSB0"
+EOF
+
+# Enable PCSC daemon for NFC
+systemctl enable pcscd
+
+# Create Python virtual environment for kiosk services
+python3 -m venv /opt/kiosk/venv
+source /opt/kiosk/venv/bin/activate
+
+# Install Python packages in virtual environment
+pip install \
+    fastapi \
+    uvicorn[standard] \
+    websockets \
+    pyyaml \
+    requests \
+    aiofiles \
+    python-multipart \
+    nfcpy \
+    asyncio-mqtt
+
+echo "NFC libraries and Python environment setup completed."

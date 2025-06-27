@@ -1,0 +1,18 @@
+[Unit]
+Description=Kiosk Network Management Service
+After=network.target NetworkManager.service
+Wants=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/kiosk/apis
+ExecStart=/opt/kiosk/venv/bin/uvicorn network_service:app --host 0.0.0.0 --port 3003
+Restart=always
+RestartSec=10
+Environment=PATH=/opt/kiosk/venv/bin:$PATH
+Environment=PYTHONPATH=/opt/kiosk/apis
+
+[Install]
+WantedBy=multi-user.target

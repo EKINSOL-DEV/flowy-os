@@ -1,0 +1,18 @@
+[Unit]
+Description=Kiosk NFC Service
+After=network.target pcscd.service
+Wants=network.target
+
+[Service]
+Type=simple
+User=kiosk
+Group=kiosk
+WorkingDirectory=/opt/kiosk/apis
+ExecStart=/opt/kiosk/venv/bin/python nfc_service.py
+Restart=always
+RestartSec=10
+Environment=PATH=/opt/kiosk/venv/bin:$PATH
+Environment=PYTHONPATH=/opt/kiosk/apis
+
+[Install]
+WantedBy=multi-user.target

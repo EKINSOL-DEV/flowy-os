@@ -1,0 +1,471 @@
+/* Kiosk Application Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #1a1a1a;
+    color: #ffffff;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: none;
+}
+
+/* Screen Management */
+.screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: none;
+    background: #1a1a1a;
+}
+
+.screen.active {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Loading Screen */
+#loading {
+    justify-content: center;
+    align-items: center;
+}
+
+.loading-content {
+    text-align: center;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid #333;
+    border-top: 4px solid #00a8ff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 2rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Network Setup Screen */
+#network-setup {
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.setup-content {
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+}
+
+.setup-content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #00a8ff;
+}
+
+.network-controls {
+    margin: 2rem 0;
+}
+
+.network-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin: 2rem 0;
+}
+
+.network-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    background: #2a2a2a;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.network-item:hover {
+    background: #3a3a3a;
+}
+
+.network-item.connected {
+    background: #2d5a27;
+}
+
+.network-info {
+    flex: 1;
+    text-align: left;
+}
+
+.network-ssid {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.network-details {
+    font-size: 0.9rem;
+    color: #ccc;
+    margin-top: 0.25rem;
+}
+
+.signal-strength {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.signal-bars {
+    display: flex;
+    gap: 2px;
+    align-items: end;
+}
+
+.signal-bar {
+    width: 4px;
+    background: #666;
+    border-radius: 2px;
+}
+
+.signal-bar.active {
+    background: #00a8ff;
+}
+
+.signal-bar:nth-child(1) { height: 8px; }
+.signal-bar:nth-child(2) { height: 12px; }
+.signal-bar:nth-child(3) { height: 16px; }
+.signal-bar:nth-child(4) { height: 20px; }
+
+.connection-form {
+    background: #2a2a2a;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-top: 2rem;
+}
+
+.connection-form.hidden {
+    display: none;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #444;
+    border-radius: 6px;
+    background: #1a1a1a;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #00a8ff;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+/* Main Application */
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: #2a2a2a;
+    border-bottom: 2px solid #00a8ff;
+}
+
+.app-header h1 {
+    color: #00a8ff;
+    font-size: 2rem;
+}
+
+.status-indicators {
+    display: flex;
+    gap: 2rem;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #1a1a1a;
+    border-radius: 20px;
+}
+
+.status-icon {
+    font-size: 1.2rem;
+}
+
+.app-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+}
+
+.nfc-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.nfc-reader {
+    text-align: center;
+    background: #2a2a2a;
+    border: 3px dashed #00a8ff;
+    border-radius: 20px;
+    padding: 4rem;
+    max-width: 500px;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.nfc-reader.detecting {
+    border-color: #ffa500;
+    background: rgba(255, 165, 0, 0.1);
+    animation: pulse 2s infinite;
+}
+
+.nfc-reader.detected {
+    border-color: #28a745;
+    background: rgba(40, 167, 69, 0.1);
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.nfc-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.nfc-reader h2 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: #00a8ff;
+}
+
+.app-content {
+    margin-top: 2rem;
+}
+
+.card-info {
+    background: #2a2a2a;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.card-info.hidden {
+    display: none;
+}
+
+.card-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.card-details p {
+    padding: 0.75rem;
+    background: #1a1a1a;
+    border-radius: 6px;
+}
+
+.app-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: #2a2a2a;
+    border-top: 1px solid #444;
+}
+
+.system-info {
+    font-family: 'Courier New', monospace;
+    color: #ccc;
+}
+
+/* Settings Screen */
+#settings {
+    padding: 2rem;
+}
+
+.settings-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.settings-content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    color: #00a8ff;
+    text-align: center;
+}
+
+.settings-section {
+    background: #2a2a2a;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.settings-section h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #00a8ff;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid #444;
+}
+
+.setting-item:last-child {
+    border-bottom: none;
+}
+
+.settings-actions {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+/* Buttons */
+.btn {
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 120px;
+}
+
+.btn-primary {
+    background: #00a8ff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0088cc;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: #666;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #555;
+    transform: translateY(-1px);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Status Messages */
+.status-message {
+    margin: 1rem 0;
+    padding: 0.75rem;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.status-message.success {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+    border: 1px solid #28a745;
+}
+
+.status-message.error {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+    border: 1px solid #dc3545;
+}
+
+.status-message.info {
+    background: rgba(0, 168, 255, 0.2);
+    color: #00a8ff;
+    border: 1px solid #00a8ff;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.mt-2 {
+    margin-top: 2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .app-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .status-indicators {
+        justify-content: center;
+    }
+    
+    .app-footer {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .nfc-reader {
+        padding: 2rem;
+    }
+    
+    .card-details {
+        grid-template-columns: 1fr;
+    }
+}

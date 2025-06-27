@@ -1,0 +1,59 @@
+#!/bin/bash
+# Services and configuration setup
+
+set -e
+
+echo "Setting up services and configuration..."
+
+# Copy systemd service files
+cp /tmp/services/*.service /etc/systemd/system/
+
+# Enable kiosk services
+systemctl enable kiosk-frontend.service
+systemctl enable kiosk-nfc.service  
+systemctl enable kiosk-network.service
+systemctl enable kiosk-updater.service
+
+# Configure nginx
+cp /tmp/nginx.conf /etc/nginx/sites-available/kiosk
+ln -sf /etc/nginx/sites-available/kiosk /etc/nginx/sites-enabled/default
+rm -f /etc/nginx/sites-enabled/default.orig
+
+# Enable nginx
+systemctl enable nginx
+
+# Configure X11 for kiosk mode
+mkdir -p /home/kiosk/.config/autostart
+cat > /home/kiosk/.config/autostart/kiosk.desktop << EOF
+[Desktop Entry]
+Type=Application
+Name=Kiosk Browser
+Exec=/opt/kiosk/scripts/start-kiosk.sh
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+EOF
+
+# Create X11 startup script
+cat > /home/kiosk/.xinitrc << EOF
+#!/bin/bash
+xset -dpms
+xset s off
+xset s noblank
+/opt/kiosk/scripts/start-kiosk.sh
+EOF
+
+# Make scripts executable
+chmod +x /home/kiosk/.xinitrc
+chmod +x /opt/kiosk/scripts/*.sh
+
+# Set ownership for kiosk user
+chown -R kiosk:kiosk /home/kiosk/.config
+chown -R kiosk:kiosk /opt/kiosk
+
+# Configure auto-start X11 on login
+echo 'if [ -z "$DISPLAY" ] && [ "$XDG_VTNR" = 1 ]; then' >> /home/kiosk/.bashrc
+echo '    exec startx' >> /home/kiosk/.bashrc
+echo 'fi' >> /home/kiosk/.bashrc
+
+echo "Services and configuration setup completed."

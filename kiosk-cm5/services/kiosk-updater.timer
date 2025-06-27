@@ -1,0 +1,10 @@
+[Unit]
+Description=Kiosk Update Timer
+Requires=kiosk-updater.service
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=timers.target
