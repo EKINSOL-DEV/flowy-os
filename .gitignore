@@ -1,7 +1,8 @@
-deploy/*
-work/*
-postrun.sh
-SKIP
-SKIP_IMAGES
+rpi-image-gen/deploy/*
+rpi-image-gen/work/*
+rpi-image-gen/legacy/*
+rpi-image-gen/postrun.sh
+rpi-image-gen/SKIP
+rpi-image-gen/SKIP_IMAGES
 .pc
 *-pc

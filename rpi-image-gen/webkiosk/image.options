@@ -1,0 +1,8 @@
+# Comments are supported
+device_hostname=flowpi
+# All variables will be translated to lower case and made available to hooks
+device_user1=flowy
+device_user1pass=demo
+# Variables set in the .cfg file can be overridden
+image_name=flowy-kiosk-test
+ssh_user1=y

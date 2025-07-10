@@ -1,0 +1,7 @@
+# Comments are supported
+DEVICE_HOSTNAME=flowpi
+# All variables will be translated to lower case and made available to hooks
+device_user1=flowy
+dEvIcE_UsER1pASs=demo
+# Variables set in the .cfg file can be overridden
+IMAGE_NAME=flowy-kiosk-test
