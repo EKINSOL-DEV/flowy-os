@@ -1,5 +1,35 @@
 # Development Log
 
+## 2025-07-11 - WebKiosk Documentation Enhancement
+**Author**: Claude (AI Assistant)
+**Commit**: In progress
+
+### Changes
+- **Documentation**:
+  - Created comprehensive README.md for the webkiosk component in rpi-image-gen
+  - Replaced minimal documentation with detailed guide covering:
+    - System architecture and component overview
+    - Step-by-step build and deployment instructions
+    - Customization options for different use cases
+    - Security hardening recommendations
+    - Troubleshooting guide for common issues
+    - Advanced configuration options (multi-display, touch screen, performance tuning)
+    - Development workflow and rapid iteration tips
+
+### Technical Details
+- WebKiosk uses Wayland/Cage compositor for minimal, secure kiosk operation
+- Includes FastAPI backend server for local web applications
+- Emergency escape mechanism via Ctrl+Shift+K keyboard shortcut
+- Supports all Raspberry Pi models (4, 5, CM4, CM5, Zero 2W)
+- Build system integrates with rpi-image-gen using generic64-apt-simple base
+
+### Documentation Highlights
+- Clear architecture diagram showing service relationships
+- Code examples for common customization scenarios
+- Security best practices for production deployments
+- Network isolation recommendations for high-security environments
+- Performance tuning options for resource-constrained devices
+
 ## 2025-06-27 - Initial Kiosk System Implementation
 **Author**: Development Team
 **Commit**: 0ef1fd3
