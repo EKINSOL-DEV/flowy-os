@@ -2,7 +2,7 @@
 
 ## 2025-07-11 - WebKiosk Documentation Enhancement
 **Author**: Claude (AI Assistant)
-**Commit**: In progress
+**Commit**: 16a3f72
 
 ### Changes
 - **Documentation**:
@@ -29,6 +29,27 @@
 - Security best practices for production deployments
 - Network isolation recommendations for high-security environments
 - Performance tuning options for resource-constrained devices
+
+## 2025-07-11 - Fix SSH Configuration in WebKiosk
+**Author**: Claude (AI Assistant)  
+**Commit**: In progress
+
+### Changes
+- **Bug Fix**:
+  - Fixed SSH not working in webkiosk builds due to incorrect variable naming
+  - Changed `ssh_user1=y` to `device_ssh_user1=y` in image.options
+  - Updated README.md documentation to reflect correct SSH configuration variable
+
+### Technical Details
+- The rpi-image-gen build system requires the `device_` prefix for SSH configuration variables
+- Without the prefix, the build system check at line 326 of build.sh fails
+- This prevented the openssh-server package from being included in the image
+- The fix ensures SSH is properly enabled when building the webkiosk image
+
+### Root Cause
+- Device defaults are loaded with a "device" namespace prefix
+- User options from image.options were missing this required prefix
+- The mismatch caused the SSH enablement check to fail silently
 
 ## 2025-06-27 - Initial Kiosk System Implementation
 **Author**: Development Team

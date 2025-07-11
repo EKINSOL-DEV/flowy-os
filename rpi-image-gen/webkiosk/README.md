@@ -173,7 +173,7 @@ EOF
 2. **Disable SSH** (remove from `image.options`):
    ```bash
    # Comment out or remove:
-   # ENABLE_SSH="your-user"
+   # device_ssh_user1=y
    ```
 
 3. **Remove emergency kill switch** (edit `bdebstrap/customize01`):
