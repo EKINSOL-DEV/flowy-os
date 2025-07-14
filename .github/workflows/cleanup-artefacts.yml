@@ -1,0 +1,159 @@
+# .github/workflows/cleanup-artifacts.yml
+name: Cleanup Build Artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      days_old:
+        description: 'Delete artifacts older than X days (0 = delete all flowy-os artifacts)'
+        required: false
+        default: '7'
+        type: string
+      dry_run:
+        description: 'Dry run - only show what would be deleted'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  cleanup-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const daysOld = parseInt('${{ github.event.inputs.days_old }}') || 7;
+            const isDryRun = '${{ github.event.inputs.dry_run }}' === 'true';
+            
+            console.log(`🧹 Starting artifact cleanup...`);
+            console.log(`📅 Target: artifacts older than ${daysOld} days`);
+            console.log(`🔍 Mode: ${isDryRun ? 'DRY RUN (no deletions)' : 'LIVE (will delete)'}`);
+            console.log('');
+            
+            // Calculate cutoff date
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+            
+            let page = 1;
+            let totalFound = 0;
+            let totalDeleted = 0;
+            let totalSize = 0;
+            
+            while (true) {
+              const artifacts = await github.rest.actions.listArtifactsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+                page: page
+              });
+              
+              if (artifacts.data.artifacts.length === 0) break;
+              
+              for (const artifact of artifacts.data.artifacts) {
+                // Only target flowy-os artifacts
+                if (!artifact.name.startsWith('flowy-os-')) continue;
+                
+                const createdAt = new Date(artifact.created_at);
+                const isOld = daysOld === 0 || createdAt < cutoffDate;
+                
+                if (isOld) {
+                  totalFound++;
+                  totalSize += artifact.size_in_bytes;
+                  
+                  const sizeInMB = (artifact.size_in_bytes / (1024 * 1024)).toFixed(2);
+                  const ageInDays = Math.floor((new Date() - createdAt) / (1000 * 60 * 60 * 24));
+                  
+                  console.log(`📦 ${artifact.name}`);
+                  console.log(`   📅 Created: ${createdAt.toISOString().split('T')[0]} (${ageInDays} days ago)`);
+                  console.log(`   💾 Size: ${sizeInMB} MB`);
+                  console.log(`   🔗 ID: ${artifact.id}`);
+                  
+                  if (!isDryRun) {
+                    try {
+                      await github.rest.actions.deleteArtifact({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        artifact_id: artifact.id
+                      });
+                      totalDeleted++;
+                      console.log(`   ✅ Deleted successfully`);
+                    } catch (error) {
+                      console.log(`   ❌ Failed to delete: ${error.message}`);
+                    }
+                  } else {
+                    console.log(`   🔍 Would be deleted (dry run)`);
+                  }
+                  console.log('');
+                }
+              }
+              
+              page++;
+            }
+            
+            const totalSizeInMB = (totalSize / (1024 * 1024)).toFixed(2);
+            
+            console.log('📊 SUMMARY:');
+            console.log(`🎯 Artifacts found: ${totalFound}`);
+            console.log(`📦 Total size: ${totalSizeInMB} MB`);
+            
+            if (isDryRun) {
+              console.log(`🔍 Mode: DRY RUN - No artifacts were deleted`);
+              console.log(`💡 To actually delete these artifacts, run again with "Dry run" unchecked`);
+            } else {
+              console.log(`✅ Artifacts deleted: ${totalDeleted}`);
+              console.log(`💾 Storage freed: ${totalSizeInMB} MB`);
+            }
+            
+            // Create a summary for the GitHub Actions UI
+            const summary = `## 🧹 Artifact Cleanup Results
+            
+            **Mode:** ${isDryRun ? '🔍 DRY RUN' : '🔥 LIVE DELETION'}
+            **Target:** Artifacts older than ${daysOld} days
+            
+            ### Results:
+            - 📦 **Artifacts found:** ${totalFound}
+            - 💾 **Total size:** ${totalSizeInMB} MB
+            - ${isDryRun ? '🔍 **Would delete:** ' + totalFound + ' artifacts' : '✅ **Deleted:** ' + totalDeleted + ' artifacts'}
+            
+            ${isDryRun ? '> **Note:** This was a dry run. No artifacts were actually deleted.' : ''}
+            `;
+            
+            await core.summary.addRaw(summary).write();
+            
+            if (totalFound === 0) {
+              console.log('🎉 No old flowy-os artifacts found to clean up!');
+            }
+
+      - name: List remaining artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            console.log('\n📋 REMAINING FLOWY-OS ARTIFACTS:');
+            
+            const artifacts = await github.rest.actions.listArtifactsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            
+            const flowyArtifacts = artifacts.data.artifacts.filter(a => 
+              a.name.startsWith('flowy-os-')
+            );
+            
+            if (flowyArtifacts.length === 0) {
+              console.log('✨ No flowy-os artifacts remaining');
+            } else {
+              let totalSize = 0;
+              flowyArtifacts.forEach(artifact => {
+                const createdAt = new Date(artifact.created_at);
+                const ageInDays = Math.floor((new Date() - createdAt) / (1000 * 60 * 60 * 24));
+                const sizeInMB = (artifact.size_in_bytes / (1024 * 1024)).toFixed(2);
+                totalSize += artifact.size_in_bytes;
+                
+                console.log(`📦 ${artifact.name} (${ageInDays} days old, ${sizeInMB} MB)`);
+              });
+              
+              const totalSizeInMB = (totalSize / (1024 * 1024)).toFixed(2);
+              console.log(`\n💾 Total remaining size: ${totalSizeInMB} MB`);
+            }

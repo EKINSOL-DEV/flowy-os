@@ -6,7 +6,7 @@ After=multi-user.target
 User=<KIOSK_USER>
 Restart=always
 WorkingDirectory=<SERVER_DIR>
-ExecStart=/usr/bin/python main.py
+ExecStart=/usr/bin/python flowy_wifi_api.py
 StandardError=journal
 
 [Install]

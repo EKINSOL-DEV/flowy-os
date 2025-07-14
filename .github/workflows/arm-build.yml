@@ -1,0 +1,167 @@
+# .github/workflows/arm-build.yml
+name: ARM Image Build
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch or commit to build'
+        required: true
+        default: 'main'
+        type: string
+  # Separate workflow for artifact cleanup
+  workflow_call:
+    inputs:
+      cleanup_only:
+        description: 'Only run cleanup job'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  check-pr-prefix:
+    runs-on: ubuntu-latest
+    outputs:
+      should-build: ${{ steps.check.outputs.should-build }}
+    steps:
+      - name: Check PR title prefix or manual trigger
+        id: check
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "should-build=true" >> $GITHUB_OUTPUT
+          else
+            PR_TITLE="${{ github.event.pull_request.title }}"
+            if [[ "$PR_TITLE" =~ ^(\[GH-B\]) ]]; then
+              echo "should-build=true" >> $GITHUB_OUTPUT
+            else
+              echo "should-build=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+  build-arm-image:
+    needs: check-pr-prefix
+    if: needs.check-pr-prefix.outputs.should-build == 'true'
+    runs-on: ubuntu-latest-arm
+    timeout-minutes: 120
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - name: Setup Debian-like environment
+        run: |
+          # Install debian-specific packages if needed
+          sudo apt-get update
+          sudo apt-get install -y debootstrap qemu-user-static
+
+      - name: Make build script executable
+        run: chmod +x ./build-kiosk.sh
+
+      - name: Build ARM image
+        run: |
+          ./build-kiosk.sh
+
+      - name: Set output file path
+        id: output
+        run: |
+          echo "file-path=./rpi-image-gen/work/flowy-os/artefacts/flowy-os.img" >> $GITHUB_OUTPUT
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "artifact-name=flowy-os-manual-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+          else
+            echo "artifact-name=flowy-os-build-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify image file exists
+        run: |
+          FILE_PATH="${{ steps.output.outputs.file-path }}"
+          if [[ ! -f "$FILE_PATH" ]]; then
+            echo "Error: Expected image file not found at $FILE_PATH"
+            exit 1
+          fi
+          echo "Image file size: $(du -h "$FILE_PATH" | cut -f1)"
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.output.outputs.artifact-name }}
+          path: ${{ steps.output.outputs.file-path }}
+          retention-days: 30
+          compression-level: 6
+
+      - name: Create download link comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifactName = '${{ steps.output.outputs.artifact-name }}';
+            const runId = '${{ github.run_id }}';
+            
+            const comment = `## 🚀 ARM Image Build Complete
+            
+            **Artifact:** \`${artifactName}\`
+            
+            📥 **Download Link:** 
+            [Download flowy-os.img](https://github.com/${{ github.repository }}/actions/runs/${runId})
+            
+            > The image file will be available for 30 days. Click the link above and look for the "${artifactName}" artifact in the build artifacts section.
+            
+            **Build Details:**
+            - Runner: ARM64 Ubuntu
+            - PR: #${{ github.event.pull_request.number }}
+            - Commit: ${{ github.sha }}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: ${{ github.event.pull_request.number }},
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Create manual build summary
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "## 🚀 Manual ARM Image Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Artifact:** \`${{ steps.output.outputs.artifact-name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch/Commit:** ${{ github.event.inputs.ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit SHA:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📥 **Download:** Go to the [Actions tab](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) and download the artifact."
+
+  # Optional: Clean up old artifacts for storage management
+  cleanup-old-artifacts:
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Delete old artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listArtifactsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            for (const artifact of artifacts.data.artifacts) {
+              const createdAt = new Date(artifact.created_at);
+              if (createdAt < thirtyDaysAgo && artifact.name.startsWith('flowy-os-')) {
+                try {
+                  await github.rest.actions.deleteArtifact({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    artifact_id: artifact.id
+                  });
+                  console.log(`Deleted old artifact: ${artifact.name}`);
+                } catch (error) {
+                  console.log(`Failed to delete artifact ${artifact.name}: ${error.message}`);
+                }
+              }
+            }
