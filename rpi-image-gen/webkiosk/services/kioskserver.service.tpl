@@ -6,7 +6,7 @@ After=multi-user.target
 User=<KIOSK_USER>
 Restart=always
 WorkingDirectory=<SERVER_DIR>
-ExecStart=/usr/bin/python main.py
+ExecStart=sudo <PYTHON_EXEC> main.py
 StandardError=journal
 
 [Install]

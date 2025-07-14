@@ -1,5 +1,7 @@
 from fastapi import FastAPI
+import logging
 
+logger = logging.Logger("Test")
 app = FastAPI()
 
 
@@ -14,6 +16,6 @@ def read_item(item_id: int, q: str | None = None):
 
 if __name__ == "__main__":
     import uvicorn
-
+    
     logger.info(f"Test Server is listening to port {PORT}")
     uvicorn.run(app, host="0.0.0.0", port=PORT, reload=True)

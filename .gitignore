@@ -1,3 +1,5 @@
+images/*
+!images/.gitkeep
 rpi-image-gen/deploy/*
 rpi-image-gen/work/*
 rpi-image-gen/legacy/*
