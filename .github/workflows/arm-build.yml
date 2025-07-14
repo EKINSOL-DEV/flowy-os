@@ -1,6 +1,11 @@
 # .github/workflows/arm-build.yml
 name: ARM Image Build
 
+permissions:
+  contents: read
+  actions: write
+  pull-requests: write
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]

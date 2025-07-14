@@ -1,6 +1,10 @@
 # .github/workflows/cleanup-artifacts.yml
 name: Cleanup Build Artifacts
 
+permissions:
+  contents: read
+  actions: write
+
 on:
   workflow_dispatch:
     inputs:
