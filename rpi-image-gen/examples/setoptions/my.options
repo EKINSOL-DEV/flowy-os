@@ -4,4 +4,4 @@ DEVICE_HOSTNAME=flowpi
 device_user1=flowy
 dEvIcE_UsER1pASs=demo
 # Variables set in the .cfg file can be overridden
-IMAGE_NAME=flowy-kiosk-test
+IMAGE_NAME=flowy-os
