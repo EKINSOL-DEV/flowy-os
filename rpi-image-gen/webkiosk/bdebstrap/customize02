@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# Driver installation and hardware setup for image filesystem
+
+echo "Installing hardware drivers and firmware..."
+
+# Add user to netdev group for network management
+chroot "$1" usermod -a -G netdev "$IGconf_device_user1"
+
+# Call adapted driver scripts with chroot parameter
+bash ./driver-scripts/audio.sh "$1"
+bash ./driver-scripts/display.sh "$1"
+bash ./driver-scripts/wifi.sh "$1"
+
+# Further display configurations for kiosk user
+
+
+USER_HOME="$1/home/$IGconf_device_user1"
+KANSHI_CONFIG="$USER_HOME/.config/kanshi/config"
+
+# Ensure the directory exists
+mkdir -p "$(dirname "$KANSHI_CONFIG")"
+
+# Create kanshi config for the kiosk user
+cat << 'EOF' > "$KANSHI_CONFIG"
+profile {
+                output DSI-2 enable mode 800x1280@60.080 position 0,0 transform 270
+}
+EOF
+
+# Set proper ownership
+chroot "$1" chown -R "$IGconf_device_user1:$IGconf_device_user1" "/home/$IGconf_device_user1/.config"
+
+echo "Hardware drivers and display configuration completed."
+
+# Enable wpa_supplicant for python to use
+$BDEBSTRAP_HOOKS/enable-units "$1" wpa_supplicant

@@ -3,45 +3,59 @@
 # pkgs we need for our kiosk
 chroot $1 apt install -y cage chromium python-is-python3 python3-pip python3.11-venv triggerhappy
 
-SERVER_DIR="home/$IGconf_device_user1/server"
+# Create flowy directory
+mkdir -p $1/flowy
+chroot $1 chown -R $IGconf_device_user1:$IGconf_device_user1 /flowy
 
-chroot $1 /usr/bin/python -m venv /$SERVER_DIR/.venv
-PYTHON_DIR=/$SERVER_DIR/.venv/bin
+SERVER_DIR="/flowy/server"
 
-# Copy our server and give the kiosk ownership
-cp -r ../flowy-server "$1/$SERVER_DIR"
+# Copy our server and python requirements list
+cp -r ../flowy-server "$1$SERVER_DIR"
+cp ../pyreqs.txt "$1$SERVER_DIR/pyreqs.txt"
 
-# Install python packages
-cp ../pyreqs.txt "$1/$SERVER_DIR/pyreqs.txt"
-chroot $1 $PYTHON_DIR/pip install -r /$SERVER_DIR/pyreqs.txt
+chroot $1 /usr/bin/python -m venv $SERVER_DIR/.venv
+PYTHON_DIR=$SERVER_DIR/.venv/bin
 
-# We'll run chromium like this
+chroot $1 $PYTHON_DIR/pip install -r $SERVER_DIR/pyreqs.txt
+
+# Set up chromium arguments
 KIOSK_APP="/usr/bin/chromium-browser http://localhost:8080/docs --kiosk --noerrdialogs --disable-infobars --no-first-run --ozone-platform=wayland --enable-features=OverlayScrollbar --start-maximized"
 
-# Write out our systemd kiosk service
-cat ../services/kiosk.service.tpl | sed \
-   -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
-   -e "s|<KIOSK_RUNDIR>|\/home\/$IGconf_device_user1|g" \
-   -e "s|<KIOSK_APP>|$KIOSK_APP|g" \
-   > $1/etc/systemd/system/kiosk.service
+SYS_DIR="$1/etc/systemd/system"
+for service in kiosk kioskserver wifiserver; do
+   case $service in
+      kiosk)
+         sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
+             -e "s|<KIOSK_RUNDIR>|\/home\/$IGconf_device_user1|g" \
+             -e "s|<KIOSK_APP>|$KIOSK_APP|g" \
+            ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
+            ;;
+      kioskserver)
+         sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
+             -e "s|<SERVER_DIR>|$SERVER_DIR/test|g" \
+             -e "s|<PYTHON_EXEC>|$PYTHON_DIR/python|g" \
+            ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
+            ;;
+      wifiserver)
+         sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
+             -e "s|<SERVER_DIR>|$SERVER_DIR/wifi|g" \
+             -e "s|<PYTHON_EXEC>|$PYTHON_DIR/python|g" \
+            ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
+            ;;
+   esac
 
-# Write out our systemd backend service (python)
-cat ../services/kioskserver.service.tpl | sed \
-   -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
-   -e "s|<KIOSK_RUNDIR>|\/home\/$IGconf_device_user1|g" \
-   -e "s|<SERVER_DIR>|/$SERVER_DIR/test|g" \
-   -e "s|<PYTHON_EXEC>|$PYTHON_DIR/python|g" \
-   > $1/etc/systemd/system/kioskserver.service
+   # Enable the service
+   $BDEBSTRAP_HOOKS/enable-units "$1" flowy-$service
+done
 
-cat ../services/wifiserver.service.tpl | sed \
-   -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
-   -e "s|<KIOSK_RUNDIR>|\/home\/$IGconf_device_user1|g" \
-   -e "s|<SERVER_DIR>|/$SERVER_DIR/wifi|g" \
-   -e "s|<PYTHON_EXEC>|$PYTHON_DIR/python|g" \
-   > $1/etc/systemd/system/wifiserver.service
+# Install flowy protocol handler
+cp ../flowy-protocol-handler.sh "$1/usr/local/bin/flowy-protocol-handler.sh"
+chmod +x "$1/usr/local/bin/flowy-protocol-handler.sh"
 
-# Enable the kiosk service so it starts automatically
+# Install protocol handler desktop file
+USER_HOME="$1/home/$IGconf_device_user1"
+mkdir -p "$USER_HOME/.local/share/applications"
+cp ../flowy-protocol.desktop "$USER_HOME/.local/share/applications/"
 
-$BDEBSTRAP_HOOKS/enable-units "$1" wifiserver
-$BDEBSTRAP_HOOKS/enable-units "$1" kioskserver
-$BDEBSTRAP_HOOKS/enable-units "$1" kiosk
+# Set ownership
+chroot "$1" chown -R "$IGconf_device_user1:$IGconf_device_user1" "/home/$IGconf_device_user1/.local"

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Flowy Protocol Handler
+Exec=/usr/local/bin/flowy-protocol-handler.sh %u
+Icon=application-default-icon
+StartupNotify=false
+NoDisplay=true
+MimeType=x-scheme-handler/flowy;

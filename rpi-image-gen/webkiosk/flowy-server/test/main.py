@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 import logging
 
+PORT = 80
+
 logger = logging.Logger("Test")
 app = FastAPI()
 
@@ -16,6 +18,8 @@ def read_item(item_id: int, q: str | None = None):
 
 if __name__ == "__main__":
     import uvicorn
-    
+    import os
+
+    is_development = os.getenv("ENVIRONMENT", "production") == "development"
     logger.info(f"Test Server is listening to port {PORT}")
-    uvicorn.run(app, host="0.0.0.0", port=PORT, reload=True)
+    uvicorn.run(app, host="0.0.0.0", port=PORT, reload=is_development)
