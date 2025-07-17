@@ -32,7 +32,7 @@ for service in kiosk kioskserver wifiserver; do
             ;;
       kioskserver)
          sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
-             -e "s|<SERVER_DIR>|$SERVER_DIR/test|g" \
+             -e "s|<SERVER_DIR>|$SERVER_DIR/wifi-web|g" \
              -e "s|<PYTHON_EXEC>|$PYTHON_DIR/python|g" \
             ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
             ;;

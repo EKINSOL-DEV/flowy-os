@@ -11,7 +11,8 @@ from flowy_wifi_lib import (
     scan_wifi,
     get_all_networks,
     get_current_wifi,
-    connect_wifi
+    connect_wifi,
+    connect_wifi_networkmanager
 )
 
 PORT = 10_000
@@ -137,7 +138,14 @@ def connect_wifi_endpoint(
         interface_name: str = Body(..., description="Name of the interface to use for the connection")
 ):
     logger.info(f"Attempting to connect to Wi-Fi network {ssid} on interface {interface_name}")
-    result = connect_wifi(ssid, password, interface_name)
+    
+    # Use NetworkManager as primary method
+    result = connect_wifi_networkmanager(ssid, password, interface_name)
+    
+    if not result:
+        logger.info("NetworkManager connection failed, trying wpa_supplicant as fallback...")
+        result = connect_wifi(ssid, password, interface_name)
+    
     logger.info(f"Connection result: {result}")
     return {"connected": result}
 

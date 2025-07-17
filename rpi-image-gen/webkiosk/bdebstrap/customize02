@@ -48,3 +48,14 @@ EOF
 
 # Enable wpa_supplicant for python to use
 $BDEBSTRAP_HOOKS/enable-units "$1" wpa_supplicant
+
+# Set up polkit rule to allow netdev group to control NetworkManager
+mkdir -p "$1/etc/polkit-1/rules.d"
+cat > "$1/etc/polkit-1/rules.d/10-network-manager.rules" << 'EOF'
+polkit.addRule(function(action, subject) {
+    if (action.id.match("org.freedesktop.NetworkManager.*") &&
+        subject.isInGroup("netdev")) {
+        return polkit.Result.YES;
+    }
+});
+EOF

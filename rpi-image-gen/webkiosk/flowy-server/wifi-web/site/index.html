@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WiFi Control</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>WiFi Control Panel</h1>
+    
+    <div id="status">
+        <h2>Interface Status</h2>
+        <button onclick="getInterfaceStatus()">Refresh Status</button>
+        <pre id="interface-status"></pre>
+    </div>
+    
+    <div id="scan">
+        <h2>Available Networks</h2>
+        <button onclick="scanNetworks()">Scan Networks</button>
+        <div id="networks-list"></div>
+    </div>
+    
+    <div id="connect">
+        <h2>Connect to Network</h2>
+        <form onsubmit="connectToNetwork(event)">
+            <label>
+                SSID:
+                <input type="text" id="ssid" required>
+            </label>
+            <br><br>
+            <label>
+                Password:
+                <input type="password" id="password" required>
+            </label>
+            <br><br>
+            <label>
+                Interface:
+                <input type="text" id="interface" value="wlan0" required>
+            </label>
+            <br><br>
+            <button type="submit">Connect</button>
+        </form>
+        <div id="connection-result"></div>
+    </div>
+    
+    <div id="current">
+        <h2>Current WiFi</h2>
+        <button onclick="getCurrentWifi()">Get Current WiFi</button>
+        <pre id="current-wifi"></pre>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

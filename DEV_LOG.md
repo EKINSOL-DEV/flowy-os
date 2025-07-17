@@ -1,5 +1,60 @@
 # Development Log
 
+## 2025-07-17 - WiFi System NetworkManager Integration & Web Interface
+**Author**: Claude (AI Assistant)
+**Commit**: NetworkManager integration, polkit fixes, and web interface implementation
+
+### Changes
+- **NetworkManager Integration**:
+  - Fixed wpa_supplicant/NetworkManager conflict by implementing proper NetworkManager API usage
+  - Added polkit rules to allow netdev group members to control NetworkManager operations
+  - Implemented two-socket pattern for wpa_supplicant communication with proper timeout handling
+  - Fixed IP address assignment issues by enabling NetworkManager to handle complete WiFi connection lifecycle
+
+- **WiFi Web Interface**:
+  - Created complete web-based WiFi management interface with HTML/CSS/JavaScript separation
+  - Implemented FastAPI server to host static files on port 80
+  - Added interactive network scanning, connection management, and status monitoring
+  - Integrated with existing WiFi API endpoints for seamless functionality
+
+- **API Improvements**:
+  - Enhanced NetworkManager scanning with proper MAC address parsing
+  - Fixed truncated BSSID/frequency/signal values in scan results
+  - Implemented NetworkManager-first approach with wpa_supplicant fallback
+  - Added proper error handling and logging throughout WiFi operations
+
+- **Build System Updates**:
+  - Updated customize01 to point kioskserver to wifi-web directory
+  - Added polkit configuration to customize02 for NetworkManager permissions
+  - Integrated web interface into image build process
+
+### Technical Details
+- **NetworkManager Communication**:
+  - Uses `nmcli` commands for WiFi operations with proper error handling
+  - Implements group-based polkit authorization for network management
+  - Handles WiFi connection profiles and automatic reconnection
+  - Provides proper DHCP integration for IP address assignment
+
+- **Web Interface Architecture**:
+  - FastAPI backend serves static files (HTML, CSS, JS) on port 80
+  - JavaScript frontend makes API calls to WiFi API on port 10000
+  - Responsive design with real-time status updates and network selection
+  - Proper error handling and user feedback for all operations
+
+- **Socket Communication Fixes**:
+  - Implemented proper Unix domain socket communication pattern
+  - Added timeout handling and connection cleanup
+  - Fixed parsing issues with colon-separated MAC addresses
+  - Enhanced error reporting and debugging capabilities
+
+### Files Modified
+- `customize01`: Updated kioskserver path to wifi-web directory
+- `customize02`: Added polkit rules for NetworkManager access
+- `flowy_wifi_lib.py`: Major enhancements with NetworkManager integration
+- `flowy_wifi_api.py`: Updated for NetworkManager-first approach
+- `wifi-web/main.py`: Complete FastAPI web server implementation
+- `wifi-web/site/`: HTML, CSS, and JavaScript files for web interface
+
 ## 2025-07-17 - WebKiosk WiFi & Protocol Handler Improvements
 **Author**: Claude (AI Assistant)
 **Commit**: In progress
