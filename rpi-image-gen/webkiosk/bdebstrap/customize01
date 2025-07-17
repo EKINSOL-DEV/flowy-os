@@ -52,10 +52,6 @@ done
 cp ../flowy-protocol-handler.sh "$1/usr/local/bin/flowy-protocol-handler.sh"
 chmod +x "$1/usr/local/bin/flowy-protocol-handler.sh"
 
-# Install protocol handler desktop file
-USER_HOME="$1/home/$IGconf_device_user1"
-mkdir -p "$USER_HOME/.local/share/applications"
-cp ../flowy-protocol.desktop "$USER_HOME/.local/share/applications/"
-
-# Set ownership
-chroot "$1" chown -R "$IGconf_device_user1:$IGconf_device_user1" "/home/$IGconf_device_user1/.local"
+# Install protocol handler desktop file system-wide
+mkdir -p "$1/usr/share/applications"
+cp ../flowy-protocol.desktop "$1/usr/share/applications/"

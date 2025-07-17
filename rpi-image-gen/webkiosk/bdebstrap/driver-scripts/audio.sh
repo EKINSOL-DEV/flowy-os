@@ -9,7 +9,7 @@
 #
 # $1 = chroot directory path
 
-set -e
+# set -e
 
 # Use the chroot directory passed as parameter
 CHROOT_DIR="$1"

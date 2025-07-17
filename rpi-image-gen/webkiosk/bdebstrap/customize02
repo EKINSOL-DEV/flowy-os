@@ -33,5 +33,18 @@ chroot "$1" chown -R "$IGconf_device_user1:$IGconf_device_user1" "/home/$IGconf_
 
 echo "Hardware drivers and display configuration completed."
 
+# Give kiosk user permissions to access wpa_supplicant control sockets
+chroot "$1" usermod -a -G netdev "$IGconf_device_user1"
+
+# Set up permissions for wpa_supplicant runtime directory and config
+mkdir -p "$1/etc/systemd/system/wpa_supplicant.service.d"
+cat > "$1/etc/systemd/system/wpa_supplicant.service.d/permissions.conf" << 'EOF'
+[Service]
+ExecStartPost=/bin/chgrp netdev /var/run/wpa_supplicant
+ExecStartPost=/bin/chmod g+rw /var/run/wpa_supplicant
+ExecStartPost=/bin/chgrp netdev /etc/dbus-1/system.d/wpa_supplicant.conf
+ExecStartPost=/bin/chmod g+r /etc/dbus-1/system.d/wpa_supplicant.conf
+EOF
+
 # Enable wpa_supplicant for python to use
 $BDEBSTRAP_HOOKS/enable-units "$1" wpa_supplicant

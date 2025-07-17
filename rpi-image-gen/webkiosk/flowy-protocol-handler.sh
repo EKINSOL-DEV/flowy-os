@@ -7,8 +7,8 @@ ACTION="${URL#flowy://}"
 case "$ACTION" in
     "disksk")
         # Stop and disable the kiosk service
-        systemctl stop flowy-kiosk.service
-        systemctl disable flowy-kiosk.service
+        sudo systemctl stop flowy-kiosk.service
+        sudo systemctl disable flowy-kiosk.service
         
         # Log the action
         logger "flowy-protocol-handler: Stopped and disabled kiosk service"

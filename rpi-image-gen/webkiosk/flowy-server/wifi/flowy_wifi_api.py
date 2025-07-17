@@ -49,14 +49,16 @@ app.add_middleware(
          description="Retrieve all available wireless interfaces on the device with their status.")
 def get_interfaces_endpoint():
     logger.info("Retrieving all wireless interfaces")
-    interfaces = get_interfaces()
-    # Transform the interface objects into a JSON serializable format
+    interface_names = get_interfaces()
+    # Transform the interface names into a JSON serializable format with status
     iface_list = []
-    for iface in interfaces:
-        iface_list.append({
-            "name": iface.name(),
-            "status": get_interface_status(iface)
-        })
+    for name in interface_names:
+        iface = get_interface(name)
+        if iface:
+            iface_list.append({
+                "name": name,
+                "status": get_interface_status(iface)
+            })
     return iface_list
 
 
@@ -64,8 +66,14 @@ def get_interfaces_endpoint():
 def get_interface_endpoint(
         interface_name: str = Query(..., description="Name of the interface to retrieve information for")):
     logger.info(f"Getting interface details for: {interface_name}")
-    iface_details = get_interface(interface_name)
-    return iface_details
+    iface = get_interface(interface_name)
+    if iface:
+        return {
+            "name": iface.name(),
+            "status": get_interface_status(iface)
+        }
+    else:
+        return {"error": f"Interface {interface_name} not found"}
 
 
 @app.get("/interface_status", summary="Get Interface Status",
@@ -74,8 +82,11 @@ def get_interface_status_endpoint(
         interface_name: str = Query(..., description="Name of the interface to check status for")):
     logger.info(f"Getting interface status for: {interface_name}")
     iface = get_interface(interface_name)
-    status = get_interface_status(iface)
-    return {"interface": iface.name(), "status": status}
+    if iface:
+        status = get_interface_status(iface)
+        return {"interface": iface.name(), "status": status}
+    else:
+        return {"error": f"Interface {interface_name} not found"}
 
 
 @app.get("/scan_wifi", summary="Scan Wi-Fi Networks",
