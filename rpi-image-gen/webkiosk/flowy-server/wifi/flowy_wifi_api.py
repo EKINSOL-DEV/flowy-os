@@ -7,6 +7,7 @@ from flowy_wifi_lib import (
     get_interfaces,
     get_interface,
     get_interface_status,
+    get_interface_details,
     scan_wifi,
     get_all_networks,
     get_current_wifi,
@@ -49,42 +50,55 @@ app.add_middleware(
          description="Retrieve all available wireless interfaces on the device with their status.")
 def get_interfaces_endpoint():
     logger.info("Retrieving all wireless interfaces")
-    interface_names = get_interfaces()
-    # Transform the interface names into a JSON serializable format with status
-    iface_list = []
-    for name in interface_names:
-        iface = get_interface(name)
-        if iface:
-            iface_list.append({
-                "name": name,
-                "status": get_interface_status(iface)
-            })
-    return iface_list
+    try:
+        interface_names = get_interfaces()
+        logger.info(f"Found interface names: {interface_names}")
+        
+        # Transform the interface names into a JSON serializable format with status
+        iface_list = []
+        for name in interface_names:
+            logger.info(f"Processing interface: {name}")
+            try:
+                iface = get_interface(name)
+                if iface:
+                    logger.info(f"Getting status for interface: {name}")
+                    status = get_interface_status(iface)
+                    logger.info(f"Status for {name}: {status}")
+                    iface_list.append({
+                        "name": name,
+                        "status": status
+                    })
+                    iface.disconnect()  # Ensure connection is closed
+                else:
+                    logger.warning(f"Could not get interface object for: {name}")
+            except Exception as e:
+                logger.error(f"Error processing interface {name}: {str(e)}")
+                iface_list.append({
+                    "name": name,
+                    "status": f"ERROR: {str(e)}"
+                })
+        
+        logger.info(f"Returning interface list: {iface_list}")
+        return iface_list
+    except Exception as e:
+        logger.error(f"Error in get_interfaces_endpoint: {str(e)}")
+        return {"error": str(e)}
 
 
-@app.get("/interface", summary="Get Interface Details", description="Retrieve details of a network interface by name.")
+@app.get("/interface", summary="Get Interface Details", 
+         description="Retrieve comprehensive details of a network interface including status, IP address, connected network info, etc.")
 def get_interface_endpoint(
         interface_name: str = Query(..., description="Name of the interface to retrieve information for")):
     logger.info(f"Getting interface details for: {interface_name}")
     iface = get_interface(interface_name)
     if iface:
-        return {
-            "name": iface.name(),
-            "status": get_interface_status(iface)
-        }
-    else:
-        return {"error": f"Interface {interface_name} not found"}
-
-
-@app.get("/interface_status", summary="Get Interface Status",
-         description="Get the status of a network interface by name.")
-def get_interface_status_endpoint(
-        interface_name: str = Query(..., description="Name of the interface to check status for")):
-    logger.info(f"Getting interface status for: {interface_name}")
-    iface = get_interface(interface_name)
-    if iface:
-        status = get_interface_status(iface)
-        return {"interface": iface.name(), "status": status}
+        try:
+            details = get_interface_details(iface)
+            iface.disconnect()
+            return details
+        except Exception as e:
+            logger.error(f"Error getting interface details: {e}")
+            return {"error": f"Failed to get interface details: {str(e)}"}
     else:
         return {"error": f"Interface {interface_name} not found"}
 

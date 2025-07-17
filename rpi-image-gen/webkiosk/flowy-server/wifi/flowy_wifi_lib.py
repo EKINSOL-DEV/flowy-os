@@ -13,32 +13,49 @@ class WpaSupplicantInterface:
         self.interface_name = interface_name
         self.socket_path = f"{WPA_SUPPLICANT_SOCKET}/{interface_name}"
         self.sock = None
+        self.client_socket_path = None
     
     def connect(self):
-        """Connect to wpa_supplicant control socket."""
+        """Connect to wpa_supplicant control socket using proper pattern."""
         if not os.path.exists(self.socket_path):
             raise Exception(f"wpa_supplicant socket not found: {self.socket_path}")
         
+        # Create single socket for both sending and receiving
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        self.sock.connect(self.socket_path)
+        self.sock.settimeout(3.0)  # Set 3 second timeout
         
-        # Attach to receive unsolicited messages
-        self.send_command("ATTACH")
+        # Create temporary socket file for this client
+        import tempfile
+        self.client_socket_path = tempfile.mktemp(prefix="wpa_client_", suffix=".sock")
+        
+        # Bind to client socket path (required for wpa_supplicant responses)
+        self.sock.bind(self.client_socket_path)
     
     def disconnect(self):
         """Disconnect from wpa_supplicant control socket."""
         if self.sock:
             self.sock.close()
             self.sock = None
+        if hasattr(self, 'client_socket_path') and self.client_socket_path and os.path.exists(self.client_socket_path):
+            os.unlink(self.client_socket_path)
+            self.client_socket_path = None
     
     def send_command(self, command):
         """Send command to wpa_supplicant and return response."""
         if not self.sock:
             self.connect()
         
-        self.sock.send(command.encode())
-        response = self.sock.recv(4096).decode().strip()
-        return response
+        try:
+            # Send command to wpa_supplicant control socket
+            self.sock.sendto(command.encode(), self.socket_path)
+            # Receive response on the same socket
+            response_bytes, _ = self.sock.recvfrom(4096)
+            response = response_bytes.decode().strip()
+            return response
+        except socket.timeout:
+            raise Exception(f"Command timed out: {command}")
+        except Exception as e:
+            raise Exception(f"Command failed: {command} - {str(e)}")
     
     def name(self):
         """Get interface name."""
@@ -52,16 +69,56 @@ def get_interfaces():
         list: A list of interface names.
     """
     try:
-        # Get wireless interfaces from /proc/net/wireless
-        with open('/proc/net/wireless', 'r') as f:
-            lines = f.readlines()[2:]  # Skip header lines
+        # First try to get interfaces from wpa_supplicant global socket
+        global_socket = f"{WPA_SUPPLICANT_SOCKET}/global"
+        if os.path.exists(global_socket):
+            try:
+                sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+                sock.connect(global_socket)
+                sock.send(b"INTERFACES")
+                response = sock.recv(4096).decode().strip()
+                sock.close()
+                
+                interfaces = []
+                for line in response.split('\n'):
+                    if line.strip():
+                        # Format: interface_name\tctrl_interface_path
+                        parts = line.split('\t')
+                        if parts:
+                            interfaces.append(parts[0])
+                return interfaces
+            except Exception as e:
+                print(f"Error querying wpa_supplicant global socket: {e}")
+        
+        # Fallback: check for socket files in wpa_supplicant directory
+        if os.path.exists(WPA_SUPPLICANT_SOCKET):
             interfaces = []
-            for line in lines:
-                interface_name = line.split(':')[0].strip()
-                interfaces.append(interface_name)
+            for item in os.listdir(WPA_SUPPLICANT_SOCKET):
+                item_path = os.path.join(WPA_SUPPLICANT_SOCKET, item)
+                # Check for socket files (not regular files) and exclude special entries
+                if os.path.exists(item_path) and item != "global" and not item.startswith("p2p-dev-"):
+                    interfaces.append(item)
             return interfaces
-    except FileNotFoundError:
-        print("No wireless interfaces found.")
+        
+        # Final fallback: use NetworkManager or ip command to find wireless interfaces
+        try:
+            result = subprocess.run(['ip', 'link', 'show'], capture_output=True, text=True)
+            interfaces = []
+            for line in result.stdout.split('\n'):
+                if 'wlan' in line or 'wlp' in line:
+                    # Extract interface name from ip link output
+                    parts = line.split(':')
+                    if len(parts) >= 2:
+                        iface_name = parts[1].strip().split('@')[0]
+                        interfaces.append(iface_name)
+            return interfaces
+        except Exception as e:
+            print(f"Error using ip command: {e}")
+            
+        return []
+        
+    except Exception as e:
+        print(f"Error getting interfaces: {e}")
         return []
 
 def get_interface(interface_name="wlan0"):
@@ -85,28 +142,101 @@ def get_interface(interface_name="wlan0"):
     print(f"Interface '{interface_name}' not found. Using interface: {interfaces[0]}")
     return WpaSupplicantInterface(interfaces[0])
 
+def get_interface_details(iface):
+    """
+    Get detailed information about the interface including status and network info.
+
+    Args:
+        iface (WpaSupplicantInterface): The wireless interface.
+
+    Returns:
+        dict: A dictionary with interface details including status, IP, SSID, etc.
+    """
+    details = {
+        "name": iface.name(),
+        "status": "UNKNOWN",
+        "ip_address": None,
+        "ssid": None,
+        "bssid": None,
+        "frequency": None,
+        "signal_level": None
+    }
+    
+    try:
+        response = iface.send_command("STATUS")
+        
+        # Parse all status information
+        for line in response.split('\n'):
+            if '=' in line:
+                key, value = line.split('=', 1)
+                if key == 'wpa_state':
+                    # Map wpa_supplicant states to more user-friendly names
+                    state_map = {
+                        'COMPLETED': 'Connected',
+                        'DISCONNECTED': 'Disconnected', 
+                        'SCANNING': 'Scanning',
+                        'ASSOCIATING': 'Connecting',
+                        'ASSOCIATED': 'Connecting',
+                        'AUTHENTICATING': 'Authenticating',
+                        'FOUR_WAY_HANDSHAKE': 'Authenticating',
+                        'GROUP_HANDSHAKE': 'Authenticating',
+                        'INACTIVE': 'Inactive'
+                    }
+                    details["status"] = state_map.get(value.upper(), value.upper())
+                elif key == 'ip_address':
+                    details["ip_address"] = value
+                elif key == 'ssid':
+                    details["ssid"] = value
+                elif key == 'bssid':
+                    details["bssid"] = value
+                elif key == 'freq':
+                    details["frequency"] = value
+        
+        # If no IP from wpa_supplicant, try NetworkManager as fallback
+        if not details["ip_address"] and details["status"] == "Connected":
+            try:
+                result = subprocess.run(['nmcli', 'device', 'show', details["name"]], 
+                                      capture_output=True, text=True)
+                if result.returncode == 0:
+                    for line in result.stdout.split('\n'):
+                        if 'IP4.ADDRESS[1]' in line:
+                            ip_info = line.split(':')[1].strip()
+                            if '/' in ip_info:
+                                details["ip_address"] = ip_info.split('/')[0]
+                            break
+            except Exception:
+                pass  # NetworkManager fallback is optional
+                    
+        # Get signal level from scan results if connected
+        if details["status"] == "Connected" and details["bssid"]:
+            try:
+                scan_response = iface.send_command("SCAN_RESULTS")
+                for line in scan_response.split('\n'):
+                    if details["bssid"] in line:
+                        parts = line.split('\t')
+                        if len(parts) >= 3:
+                            details["signal_level"] = parts[2]  # Signal level in dBm
+                        break
+            except Exception:
+                pass  # Signal level is optional
+        
+        return details
+    except Exception as e:
+        details["status"] = f"ERROR: {str(e)}"
+        return details
+
 def get_interface_status(iface):
     """
     Get a human-readable string representing the status of the given interface.
-
+    
     Args:
         iface (WpaSupplicantInterface): The wireless interface.
 
     Returns:
         str: A string representation of the interface status.
     """
-    try:
-        response = iface.send_command("STATUS")
-        
-        # Parse wpa_state from status response
-        for line in response.split('\n'):
-            if line.startswith('wpa_state='):
-                state = line.split('=')[1]
-                return state.upper()
-        
-        return "UNKNOWN"
-    except Exception as e:
-        return f"ERROR: {str(e)}"
+    details = get_interface_details(iface)
+    return details["status"]
 
 def scan_wifi(interface_name="wlan0"):
     """
