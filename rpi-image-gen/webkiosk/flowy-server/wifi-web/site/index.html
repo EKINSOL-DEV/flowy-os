@@ -3,53 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WiFi Control</title>
+    <title>WiFi Dashboard</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
 <body>
-    <h1>WiFi Control Panel</h1>
-    
-    <div id="status">
-        <h2>Interface Status</h2>
-        <button onclick="getInterfaceStatus()">Refresh Status</button>
-        <pre id="interface-status"></pre>
-    </div>
-    
-    <div id="scan">
-        <h2>Available Networks</h2>
-        <button onclick="scanNetworks()">Scan Networks</button>
-        <div id="networks-list"></div>
-    </div>
-    
-    <div id="connect">
-        <h2>Connect to Network</h2>
-        <form onsubmit="connectToNetwork(event)">
-            <label>
-                SSID:
-                <input type="text" id="ssid" required>
-            </label>
-            <br><br>
-            <label>
-                Password:
-                <input type="password" id="password" required>
-            </label>
-            <br><br>
-            <label>
-                Interface:
-                <input type="text" id="interface" value="wlan0" required>
-            </label>
-            <br><br>
-            <button type="submit">Connect</button>
-        </form>
-        <div id="connection-result"></div>
-    </div>
-    
-    <div id="current">
-        <h2>Current WiFi</h2>
-        <button onclick="getCurrentWifi()">Get Current WiFi</button>
-        <pre id="current-wifi"></pre>
+    <div class="container">
+        <h1>WiFi Dashboard</h1>
+        
+        <div class="dashboard">
+            <div class="card-with-refresh">
+                <button class="refresh-icon" onclick="refreshInterfaceAndNetwork()" title="Refresh Interface and Network Status">
+                    <i data-lucide="refresh-cw"></i>
+                </button>
+                <div class="card">
+                    <h2>Interface Status</h2>
+                    <div class="form-group">
+                        <label for="interface-select">Select Interface</label>
+                        <select id="interface-select" onchange="onInterfaceChange()">
+                            <option value="">Loading interfaces...</option>
+                        </select>
+                    </div>
+                    <div id="interface-status">
+                        <div class="status-placeholder">Click the refresh icon to load interface details...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div id="current-wifi">
+                    <div class="network-header">
+                        <h2>Network</h2>
+                    </div>
+                    <div class="status-placeholder">Click the refresh icon to load connection details...</div>
+                </div>
+                <div id="network-actions" style="display: none;">
+                    <button class="disconnect-btn" onclick="disconnectWifi()" title="Disconnect from current network">
+                        <i data-lucide="unplug"></i>
+                        Disconnect
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Available Networks</h2>
+                <button onclick="scanNetworks()">
+                    <i data-lucide="search"></i>
+                    Scan Networks
+                </button>
+                <div id="networks-list">
+                    <div class="status-placeholder">Click "Scan Networks" to discover available WiFi networks...</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Connect to Network</h2>
+                <form onsubmit="connectToNetwork(event)">
+                    <div class="form-group">
+                        <label for="network-select">Select Network</label>
+                        <select id="network-select" onchange="onNetworkSelect()">
+                            <option value="">Select from scanned networks...</option>
+                            <option value="manual">Enter manually</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ssid">Network Name (SSID)</label>
+                        <input type="text" id="ssid" placeholder="Enter network name or select from dropdown" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" placeholder="Enter network password" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="interface">Interface</label>
+                        <select id="interface" required>
+                            <option value="wlan0">wlan0</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit">
+                        <i data-lucide="link"></i>
+                        Connect to Network
+                    </button>
+                </form>
+                <div id="connection-result"></div>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
 </body>
 </html>

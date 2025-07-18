@@ -1,4 +1,6 @@
-const API_BASE = 'http://localhost:10000';
+const API_BASE = `http://${window.location.hostname}:10000`;
+let availableNetworks = [];
+let selectedInterface = 'wlan0';
 
 async function apiCall(endpoint, method = 'GET', body = null) {
     try {
@@ -22,43 +24,245 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     }
 }
 
+async function loadInterfaces() {
+    const data = await apiCall('/interfaces');
+    const interfaceSelect = document.getElementById('interface-select');
+    const interfaceForm = document.getElementById('interface');
+    
+    console.log('Interfaces data:', data); // Debug log
+    
+    if (data.error) {
+        interfaceSelect.innerHTML = '<option value="">Error loading interfaces</option>';
+        return;
+    }
+    
+    if (Array.isArray(data) && data.length > 0) {
+        interfaceSelect.innerHTML = '';
+        interfaceForm.innerHTML = '';
+        
+        data.forEach(iface => {
+            // Handle both string and object interfaces
+            const ifaceName = typeof iface === 'string' ? iface : iface.name || iface.interface || JSON.stringify(iface);
+            
+            const option = document.createElement('option');
+            option.value = ifaceName;
+            option.textContent = ifaceName;
+            interfaceSelect.appendChild(option);
+            
+            const formOption = document.createElement('option');
+            formOption.value = ifaceName;
+            formOption.textContent = ifaceName;
+            interfaceForm.appendChild(formOption);
+        });
+        
+        selectedInterface = typeof data[0] === 'string' ? data[0] : data[0].name || data[0].interface || 'wlan0';
+        interfaceSelect.value = selectedInterface;
+        interfaceForm.value = selectedInterface;
+    } else {
+        interfaceSelect.innerHTML = '<option value="wlan0">wlan0</option>';
+        interfaceForm.innerHTML = '<option value="wlan0">wlan0</option>';
+        selectedInterface = 'wlan0';
+    }
+}
+
+function onInterfaceChange() {
+    const interfaceSelect = document.getElementById('interface-select');
+    selectedInterface = interfaceSelect.value;
+    document.getElementById('interface').value = selectedInterface;
+    // Clear current data
+    document.getElementById('interface-status').innerHTML = '<div class="status-placeholder">Click "Refresh Status" to load interface details...</div>';
+    document.getElementById('networks-list').innerHTML = '<div class="status-placeholder">Click "Scan Networks" to discover available WiFi networks...</div>';
+}
+
 async function getInterfaceStatus() {
-    const data = await apiCall('/interface?interface_name=wlan0');
-    document.getElementById('interface-status').textContent = JSON.stringify(data, null, 2);
+    const statusDiv = document.getElementById('interface-status');
+    statusDiv.innerHTML = '<div class="loading"><i data-lucide="loader-2"></i> Loading interface status...</div>';
+    lucide.createIcons();
+    
+    const data = await apiCall(`/interface?interface_name=${selectedInterface}`);
+    
+    if (data.error) {
+        statusDiv.innerHTML = `<div class="result-error"><i data-lucide="x-circle"></i> Error: ${data.error}</div>`;
+        lucide.createIcons();
+        return;
+    }
+    
+    statusDiv.innerHTML = createInterfaceStatusDisplay(data);
+    lucide.createIcons();
+}
+
+function createInterfaceStatusDisplay(data) {
+    console.log('Interface data:', data); // Debug log
+    
+    let statusItems = [
+        {
+            icon: 'globe',
+            label: 'IP Address',
+            value: data.ip_address || 'Not assigned'
+        },
+        {
+            icon: 'network',
+            label: 'Interface',
+            value: selectedInterface
+        }
+    ];
+    
+    const statusItemsHtml = statusItems.map(item => `
+        <div class="status-item">
+            <div class="icon">
+                <i data-lucide="${item.icon}"></i>
+            </div>
+            <div class="content">
+                <div class="label">${item.label}</div>
+                <div class="value">${item.value}</div>
+            </div>
+        </div>
+    `).join('');
+    
+    return `<div class="status-grid">${statusItemsHtml}</div>`;
 }
 
 async function scanNetworks() {
     const networksDiv = document.getElementById('networks-list');
-    networksDiv.innerHTML = '<p>Scanning...</p>';
+    networksDiv.innerHTML = '<p class="loading"><i data-lucide="loader-2"></i> Scanning for networks...</p>';
+    lucide.createIcons();
     
-    const data = await apiCall('/scan_wifi?interface_name=wlan0');
+    const data = await apiCall(`/scan_wifi?interface_name=${selectedInterface}`);
+    
+    console.log('Scan data:', data); // Debug log
     
     if (data.error) {
-        networksDiv.innerHTML = `<p>Error: ${data.error}</p>`;
+        networksDiv.innerHTML = `<div class="result-error"><i data-lucide="x-circle"></i> Error: ${data.error}</div>`;
+        lucide.createIcons();
         return;
     }
     
-    if (data.length === 0) {
-        networksDiv.innerHTML = '<p>No networks found</p>';
+    if (!data || data.length === 0) {
+        networksDiv.innerHTML = '<p><i data-lucide="wifi-off"></i> No networks found</p>';
+        lucide.createIcons();
         return;
     }
     
-    let html = '<h3>Available Networks:</h3>';
+    availableNetworks = data;
+    updateNetworkSelect();
+    
+    let html = '';
     data.forEach(network => {
+        console.log('Network:', network); // Debug log
+        const signalBars = createSignalBars(network.signal);
+        const securityIcon = network.auth !== 'Open' ? 'lock' : 'unlock';
+        
         html += `
-            <div onclick="fillSSID('${network.ssid}')" style="cursor: pointer; border: 1px solid #ccc; padding: 10px; margin: 5px;">
-                <strong>${network.ssid}</strong><br>
-                Signal: ${network.signal}dBm<br>
-                Security: ${network.auth}<br>
-                BSSID: ${network.bssid}
+            <div class="network-item" onclick="fillSSID('${network.ssid}')">
+                <div class="network-ssid">
+                    <div class="network-name">
+                        <i data-lucide="${securityIcon}"></i>
+                        ${network.ssid}
+                    </div>
+                    <div class="signal-strength">
+                        ${signalBars}
+                        <span>${network.signal || 'N/A'}dBm</span>
+                    </div>
+                </div>
+                <div class="network-details">
+                    <span>Security: ${network.auth || 'Open'}</span>
+                    ${network.bssid && network.bssid !== 'N/A' ? `<span>BSSID: ${network.bssid.replace(/\\:/g, ':').replace(/\\$/g, '')}</span>` : ''}
+                    ${network.frequency && network.frequency !== 'N/A' ? `<span>Freq: ${network.frequency.toString().includes('MHz') ? network.frequency : network.frequency + ' MHz'}</span>` : ''}
+                </div>
             </div>
         `;
     });
     networksDiv.innerHTML = html;
+    lucide.createIcons();
+}
+
+function createSignalBars(signal) {
+    // Handle cases where signal might be null/undefined
+    if (!signal || signal === 'N/A') {
+        return '<div class="signal-bars"><div class="signal-bar"></div><div class="signal-bar"></div><div class="signal-bar"></div><div class="signal-bar"></div></div>';
+    }
+    
+    const strength = getSignalStrength(signal);
+    let bars = '<div class="signal-bars">';
+    
+    for (let i = 1; i <= 4; i++) {
+        const activeClass = i <= strength ? 'active' : '';
+        bars += `<div class="signal-bar ${activeClass}"></div>`;
+    }
+    
+    bars += '</div>';
+    return bars;
+}
+
+function getSignalStrength(signal) {
+    // Handle string or number input
+    const signalNum = parseInt(signal) || -100;
+    if (signalNum > -50) return 4;
+    if (signalNum > -60) return 3;
+    if (signalNum > -70) return 2;
+    return 1;
+}
+
+
+function updateNetworkSelect() {
+    const networkSelect = document.getElementById('network-select');
+    networkSelect.innerHTML = '<option value="">Select from scanned networks...</option>';
+    
+    availableNetworks.forEach(network => {
+        const option = document.createElement('option');
+        option.value = network.ssid;
+        option.textContent = `${network.ssid} (${network.signal}dBm)`;
+        option.dataset.auth = network.auth;
+        networkSelect.appendChild(option);
+    });
+    
+    const manualOption = document.createElement('option');
+    manualOption.value = 'manual';
+    manualOption.textContent = 'Enter manually';
+    networkSelect.appendChild(manualOption);
+}
+
+function onNetworkSelect() {
+    const networkSelect = document.getElementById('network-select');
+    const ssidInput = document.getElementById('ssid');
+    const passwordInput = document.getElementById('password');
+    
+    if (networkSelect.value === 'manual' || networkSelect.value === '') {
+        ssidInput.value = '';
+        ssidInput.disabled = false;
+        passwordInput.required = true;
+    } else {
+        ssidInput.value = networkSelect.value;
+        ssidInput.disabled = true;
+        
+        const selectedOption = networkSelect.options[networkSelect.selectedIndex];
+        const authType = selectedOption.dataset.auth;
+        
+        // If network is open, password is not required
+        if (authType === 'Open') {
+            passwordInput.required = false;
+            passwordInput.value = '';
+            passwordInput.placeholder = 'No password required for open network';
+        } else {
+            passwordInput.required = true;
+            passwordInput.placeholder = 'Enter network password';
+        }
+    }
 }
 
 function fillSSID(ssid) {
-    document.getElementById('ssid').value = ssid;
+    const networkSelect = document.getElementById('network-select');
+    
+    // Find the network in the dropdown
+    for (let i = 0; i < networkSelect.options.length; i++) {
+        if (networkSelect.options[i].value === ssid) {
+            networkSelect.selectedIndex = i;
+            break;
+        }
+    }
+    
+    // Trigger the change event
+    onNetworkSelect();
 }
 
 async function connectToNetwork(event) {
@@ -69,7 +273,8 @@ async function connectToNetwork(event) {
     const interface_name = document.getElementById('interface').value;
     
     const resultDiv = document.getElementById('connection-result');
-    resultDiv.innerHTML = '<p>Connecting...</p>';
+    resultDiv.innerHTML = '<p class="loading"><i data-lucide="loader-2"></i> Connecting to network...</p>';
+    lucide.createIcons();
     
     const data = await apiCall('/connect_wifi', 'POST', {
         ssid,
@@ -78,20 +283,161 @@ async function connectToNetwork(event) {
     });
     
     if (data.connected) {
-        resultDiv.innerHTML = `<p style="color: green;">Successfully connected to ${ssid}</p>`;
+        resultDiv.innerHTML = `<div class="result-success"><i data-lucide="check-circle"></i> Successfully connected to ${ssid}</div>`;
         // Auto-refresh status after connection
-        setTimeout(getInterfaceStatus, 2000);
+        setTimeout(() => {
+            refreshInterfaceAndNetwork();
+        }, 2000);
     } else {
-        resultDiv.innerHTML = `<p style="color: red;">Failed to connect to ${ssid}</p>`;
+        resultDiv.innerHTML = `<div class="result-error"><i data-lucide="x-circle"></i> Failed to connect to ${ssid}</div>`;
     }
+    lucide.createIcons();
 }
 
 async function getCurrentWifi() {
+    const currentWifiDiv = document.getElementById('current-wifi');
+    currentWifiDiv.innerHTML = `
+        <div class="network-header">
+            <h2>Network</h2>
+            <div class="loading"><i data-lucide="loader-2"></i> Loading...</div>
+        </div>
+    `;
+    lucide.createIcons();
+    
     const data = await apiCall('/current_wifi');
-    document.getElementById('current-wifi').textContent = JSON.stringify(data, null, 2);
+    
+    if (data.error) {
+        currentWifiDiv.innerHTML = `
+            <div class="network-header">
+                <h2>Network</h2>
+                <div class="result-error"><i data-lucide="x-circle"></i> Error: ${data.error}</div>
+            </div>
+        `;
+        lucide.createIcons();
+        return;
+    }
+    
+    if (!data.ssid) {
+        currentWifiDiv.innerHTML = createCurrentWifiDisplay(null);
+        lucide.createIcons();
+        return;
+    }
+    
+    // Get additional details from interface if connected
+    let enrichedData = { ...data };
+    try {
+        const interfaceData = await apiCall(`/interface?interface_name=${selectedInterface}`);
+        if (interfaceData && interfaceData.ssid === data.ssid) {
+            // Merge interface data with current wifi data
+            enrichedData = {
+                ...data,
+                signal_level: interfaceData.signal_level,
+                bssid: interfaceData.bssid,
+                frequency: interfaceData.frequency
+            };
+        }
+    } catch (error) {
+        console.log('Could not get interface details:', error);
+    }
+    
+    currentWifiDiv.innerHTML = createCurrentWifiDisplay(enrichedData);
+    lucide.createIcons();
+}
+
+function createCurrentWifiDisplay(data) {
+    console.log('Current WiFi data:', data); // Debug log
+    
+    // Handle disconnected state
+    if (!data || !data.ssid) {
+        // Hide disconnect button when disconnected
+        const actionsDiv = document.getElementById('network-actions');
+        if (actionsDiv) actionsDiv.style.display = 'none';
+        
+        return `
+            <div class="network-header">
+                <h2>Network</h2>
+                <span class="status-badge disconnected">
+                    <i data-lucide="x"></i>
+                    Disconnected
+                </span>
+            </div>
+            
+            <div class="connection-network-name">
+                <i data-lucide="wifi-off"></i>
+                <span>No Network Connected</span>
+            </div>
+            
+            <div class="connection-details">
+                <div class="connection-info">
+                    <i data-lucide="info"></i>
+                    <span>Use the "Connect to Network" section to establish a connection.</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Show disconnect button when connected
+    const actionsDiv = document.getElementById('network-actions');
+    if (actionsDiv) actionsDiv.style.display = 'block';
+    
+    const signal = data.signal || data.signal_level;
+    const signalBars = signal ? createSignalBars(signal) : '';
+    const cleanBssid = data.bssid ? data.bssid.replace(/\\:/g, ':').replace(/\\$/g, '') : null;
+    const freqValue = data.frequency ? (data.frequency.toString().includes('MHz') ? data.frequency : `${data.frequency} MHz`) : null;
+    
+    return `
+        <div class="network-header">
+            <h2>Network</h2>
+            <span class="status-badge connected">
+                <i data-lucide="check"></i>
+                Connected
+            </span>
+        </div>
+        
+        <div class="connection-network-name">
+            ${signalBars}
+            <span>${data.ssid}</span>
+        </div>
+        
+        <div class="connection-details">
+            <div class="connection-detail">
+                <span class="detail-label">SSID:</span>
+                <span class="detail-value">${data.ssid}</span>
+            </div>
+            ${cleanBssid ? `
+                <div class="connection-detail">
+                    <span class="detail-label">BSSID:</span>
+                    <span class="detail-value">${cleanBssid}</span>
+                </div>
+            ` : ''}
+            ${freqValue ? `
+                <div class="connection-detail">
+                    <span class="detail-label">Frequency:</span>
+                    <span class="detail-value">${freqValue}</span>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+// Merged refresh function for both interface and network
+async function refreshInterfaceAndNetwork() {
+    await getInterfaceStatus();
+    await getCurrentWifi();
+}
+
+// Placeholder disconnect function
+function disconnectWifi() {
+    alert('Disconnect functionality not yet implemented. This will disconnect from the current network.');
+    // TODO: Implement actual disconnect API call
+    // const result = await apiCall('/disconnect_wifi', 'POST', { interface_name: selectedInterface });
+    // if (result.success) {
+    //     refreshInterfaceAndNetwork();
+    // }
 }
 
 // Auto-load interface status on page load
 window.onload = function() {
-    getInterfaceStatus();
+    loadInterfaces();
+    refreshInterfaceAndNetwork();
 };

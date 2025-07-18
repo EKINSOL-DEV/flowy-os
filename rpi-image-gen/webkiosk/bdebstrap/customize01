@@ -19,7 +19,7 @@ PYTHON_DIR=$SERVER_DIR/.venv/bin
 chroot $1 $PYTHON_DIR/pip install -r $SERVER_DIR/pyreqs.txt
 
 # Set up chromium arguments
-KIOSK_APP="/usr/bin/chromium-browser http://localhost:8080/docs --kiosk --noerrdialogs --disable-infobars --no-first-run --ozone-platform=wayland --enable-features=OverlayScrollbar --start-maximized"
+KIOSK_APP="/usr/bin/chromium-browser http://localhost:8080/ --kiosk --noerrdialogs --disable-infobars --no-first-run --ozone-platform=wayland --enable-features=OverlayScrollbar --start-maximized"
 
 SYS_DIR="$1/etc/systemd/system"
 for service in kiosk kioskserver wifiserver; do

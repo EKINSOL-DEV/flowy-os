@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-PORT = 80
+PORT = 8080
 
 # Create logs directory if it doesn't exist
 log_dir = '/flowy/logs/wifi-web'
@@ -38,17 +38,29 @@ app.mount("/static", StaticFiles(directory=site_dir), name="static")
 @app.get("/")
 async def read_root():
     """Serve the main index.html file"""
-    return FileResponse(os.path.join(site_dir, "index.html"))
+    response = FileResponse(os.path.join(site_dir, "index.html"))
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/style.css")
 async def get_css():
     """Serve the CSS file"""
-    return FileResponse(os.path.join(site_dir, "style.css"))
+    response = FileResponse(os.path.join(site_dir, "style.css"))
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/script.js")
 async def get_js():
     """Serve the JavaScript file"""
-    return FileResponse(os.path.join(site_dir, "script.js"))
+    response = FileResponse(os.path.join(site_dir, "script.js"))
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/health")
 async def health_check():

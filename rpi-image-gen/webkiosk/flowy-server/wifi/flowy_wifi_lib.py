@@ -206,7 +206,7 @@ def get_interface_details_networkmanager(interface_name):
                             parts = line.split(':')
                             if len(parts) >= 10:  # yes:SSID:MAC1:MAC2:MAC3:MAC4:MAC5:MAC6:FREQ:SIGNAL
                                 # Reconstruct BSSID from parts 2-7 and remove escapes
-                                details["bssid"] = ':'.join(parts[2:8]).replace('\\:', ':')
+                                details["bssid"] = ':'.join(parts[2:8]).replace('\\:', ':').rstrip('\\')
                                 details["frequency"] = parts[8]
                                 # Convert signal to dBm if needed
                                 signal = parts[9]
@@ -264,7 +264,7 @@ def get_interface_details(iface):
                     elif key == 'ssid':
                         details["ssid"] = value
                     elif key == 'bssid':
-                        details["bssid"] = value
+                        details["bssid"] = value.replace('\\:', ':').rstrip('\\')
                     elif key == 'freq':
                         details["frequency"] = value
                         
@@ -342,8 +342,8 @@ def scan_wifi_networkmanager(interface_name="wlan0"):
                 
             ssid = parts[0].strip()
             signal = parts[1].strip()
-            # Reconstruct BSSID from parts 2-7
-            bssid = ':'.join(parts[2:8]).strip()
+            # Reconstruct BSSID from parts 2-7 and remove escapes
+            bssid = ':'.join(parts[2:8]).replace('\\:', ':').strip()
             frequency = parts[8].strip() if len(parts) > 8 else ""
             security = parts[9].strip() if len(parts) > 9 else ""
             
@@ -420,7 +420,7 @@ def scan_wifi(interface_name="wlan0"):
             if len(parts) < 5:
                 continue
                 
-            bssid = parts[0]
+            bssid = parts[0].replace('\\:', ':').rstrip('\\')
             frequency = parts[1]
             signal = int(parts[2])
             flags = parts[3]
@@ -494,7 +494,7 @@ def get_all_networks(interface_name="wlan0"):
             if len(parts) < 5:
                 continue
                 
-            bssid = parts[0]
+            bssid = parts[0].replace('\\:', ':').rstrip('\\')
             frequency = parts[1]
             signal = parts[2]
             flags = parts[3]
