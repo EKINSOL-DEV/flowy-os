@@ -25,42 +25,54 @@ async function apiCall(endpoint, method = 'GET', body = null) {
 }
 
 async function loadInterfaces() {
-    const data = await apiCall('/interfaces');
     const interfaceSelect = document.getElementById('interface-select');
     const interfaceForm = document.getElementById('interface');
     
-    console.log('Interfaces data:', data); // Debug log
+    // Show loading state
+    interfaceSelect.innerHTML = '<option value="">Loading interfaces...</option>';
     
-    if (data.error) {
-        interfaceSelect.innerHTML = '<option value="">Error loading interfaces</option>';
-        return;
-    }
-    
-    if (Array.isArray(data) && data.length > 0) {
-        interfaceSelect.innerHTML = '';
-        interfaceForm.innerHTML = '';
+    try {
+        const data = await apiCall('/interfaces');
+        console.log('Interfaces data:', data); // Debug log
         
-        data.forEach(iface => {
-            // Handle both string and object interfaces
-            const ifaceName = typeof iface === 'string' ? iface : iface.name || iface.interface || JSON.stringify(iface);
-            
-            const option = document.createElement('option');
-            option.value = ifaceName;
-            option.textContent = ifaceName;
-            interfaceSelect.appendChild(option);
-            
-            const formOption = document.createElement('option');
-            formOption.value = ifaceName;
-            formOption.textContent = ifaceName;
-            interfaceForm.appendChild(formOption);
-        });
+        if (data.error) {
+            console.error('Interface loading error:', data.error);
+            interfaceSelect.innerHTML = '<option value="">Error loading interfaces</option>';
+            return;
+        }
         
-        selectedInterface = typeof data[0] === 'string' ? data[0] : data[0].name || data[0].interface || 'wlan0';
-        interfaceSelect.value = selectedInterface;
-        interfaceForm.value = selectedInterface;
-    } else {
-        interfaceSelect.innerHTML = '<option value="wlan0">wlan0</option>';
-        interfaceForm.innerHTML = '<option value="wlan0">wlan0</option>';
+        if (Array.isArray(data) && data.length > 0) {
+            interfaceSelect.innerHTML = '';
+            interfaceForm.innerHTML = '';
+            
+            data.forEach(iface => {
+                // Handle both string and object interfaces
+                const ifaceName = typeof iface === 'string' ? iface : iface.name || iface.interface || JSON.stringify(iface);
+                
+                const option = document.createElement('option');
+                option.value = ifaceName;
+                option.textContent = ifaceName;
+                interfaceSelect.appendChild(option);
+                
+                const formOption = document.createElement('option');
+                formOption.value = ifaceName;
+                formOption.textContent = ifaceName;
+                interfaceForm.appendChild(formOption);
+            });
+            
+            selectedInterface = typeof data[0] === 'string' ? data[0] : data[0].name || data[0].interface || 'wlan0';
+            interfaceSelect.value = selectedInterface;
+            interfaceForm.value = selectedInterface;
+        } else {
+            console.log('No interfaces found, using default wlan0');
+            interfaceSelect.innerHTML = '<option value="wlan0">wlan0</option>';
+            interfaceForm.innerHTML = '<option value="wlan0">wlan0</option>';
+            selectedInterface = 'wlan0';
+        }
+    } catch (error) {
+        console.error('Failed to load interfaces:', error);
+        interfaceSelect.innerHTML = '<option value="wlan0">wlan0 (fallback)</option>';
+        interfaceForm.innerHTML = '<option value="wlan0">wlan0 (fallback)</option>';
         selectedInterface = 'wlan0';
     }
 }
@@ -96,16 +108,30 @@ function createInterfaceStatusDisplay(data) {
     
     let statusItems = [
         {
+            icon: 'network',
+            label: 'Interface',
+            value: data.name || selectedInterface
+        },
+        {
+            icon: 'activity',
+            label: 'Status',
+            value: data.status || 'Unknown'
+        },
+        {
             icon: 'globe',
             label: 'IP Address',
             value: data.ip_address || 'Not assigned'
-        },
-        {
-            icon: 'network',
-            label: 'Interface',
-            value: selectedInterface
         }
     ];
+    
+    // Add MAC address if available
+    if (data.mac_address) {
+        statusItems.push({
+            icon: 'hash',
+            label: 'MAC Address',
+            value: data.mac_address
+        });
+    }
     
     const statusItemsHtml = statusItems.map(item => `
         <div class="status-item">
@@ -127,7 +153,7 @@ async function scanNetworks() {
     networksDiv.innerHTML = '<p class="loading"><i data-lucide="loader-2"></i> Scanning for networks...</p>';
     lucide.createIcons();
     
-    const data = await apiCall(`/scan_wifi?interface_name=${selectedInterface}`);
+    const data = await apiCall(`/network/scan?interface_name=${selectedInterface}`);
     
     console.log('Scan data:', data); // Debug log
     
@@ -276,7 +302,7 @@ async function connectToNetwork(event) {
     resultDiv.innerHTML = '<p class="loading"><i data-lucide="loader-2"></i> Connecting to network...</p>';
     lucide.createIcons();
     
-    const data = await apiCall('/connect_wifi', 'POST', {
+    const data = await apiCall('/network/connect', 'POST', {
         ssid,
         password,
         interface_name
@@ -304,7 +330,7 @@ async function getCurrentWifi() {
     `;
     lucide.createIcons();
     
-    const data = await apiCall('/current_wifi');
+    const data = await apiCall(`/network/current?interface_name=${selectedInterface}`);
     
     if (data.error) {
         currentWifiDiv.innerHTML = `
@@ -317,30 +343,14 @@ async function getCurrentWifi() {
         return;
     }
     
-    if (!data.ssid) {
+    if (!data.connected || !data.ssid) {
         currentWifiDiv.innerHTML = createCurrentWifiDisplay(null);
         lucide.createIcons();
         return;
     }
     
-    // Get additional details from interface if connected
-    let enrichedData = { ...data };
-    try {
-        const interfaceData = await apiCall(`/interface?interface_name=${selectedInterface}`);
-        if (interfaceData && interfaceData.ssid === data.ssid) {
-            // Merge interface data with current wifi data
-            enrichedData = {
-                ...data,
-                signal_level: interfaceData.signal_level,
-                bssid: interfaceData.bssid,
-                frequency: interfaceData.frequency
-            };
-        }
-    } catch (error) {
-        console.log('Could not get interface details:', error);
-    }
-    
-    currentWifiDiv.innerHTML = createCurrentWifiDisplay(enrichedData);
+    // The new /network/current endpoint already includes all network details
+    currentWifiDiv.innerHTML = createCurrentWifiDisplay(data);
     lucide.createIcons();
 }
 
@@ -426,14 +436,62 @@ async function refreshInterfaceAndNetwork() {
     await getCurrentWifi();
 }
 
-// Placeholder disconnect function
-function disconnectWifi() {
-    alert('Disconnect functionality not yet implemented. This will disconnect from the current network.');
-    // TODO: Implement actual disconnect API call
-    // const result = await apiCall('/disconnect_wifi', 'POST', { interface_name: selectedInterface });
-    // if (result.success) {
-    //     refreshInterfaceAndNetwork();
-    // }
+// Disconnect from current WiFi network
+async function disconnectWifi() {
+    if (!confirm('Are you sure you want to disconnect from the current WiFi network?')) {
+        return;
+    }
+    
+    const actionsDiv = document.getElementById('network-actions');
+    const originalContent = actionsDiv.innerHTML;
+    
+    // Show loading state
+    actionsDiv.innerHTML = `
+        <div class="loading">
+            <i data-lucide="loader-2"></i>
+            Disconnecting...
+        </div>
+    `;
+    lucide.createIcons();
+    
+    try {
+        const result = await apiCall('/network/disconnect', 'POST', {interface_name: selectedInterface});
+        
+        if (result.disconnected) {
+            // Success - refresh the interface and network status
+            await refreshInterfaceAndNetwork();
+        } else {
+            // Failed - show error and restore original content
+            actionsDiv.innerHTML = `
+                <div class="result-error">
+                    <i data-lucide="x-circle"></i>
+                    Failed to disconnect
+                </div>
+            `;
+            lucide.createIcons();
+            
+            // Restore original content after 3 seconds
+            setTimeout(() => {
+                actionsDiv.innerHTML = originalContent;
+                lucide.createIcons();
+            }, 3000);
+        }
+    } catch (error) {
+        console.error('Disconnect error:', error);
+        actionsDiv.innerHTML = `
+            <div class="result-error">
+                <i data-lucide="x-circle"></i>
+                Error: ${error.message}
+            </div>
+        `;
+        lucide.createIcons();
+        
+        // Restore original content after 3 seconds
+        setTimeout(() => {
+            actionsDiv.innerHTML = originalContent;
+            lucide.createIcons();
+        }, 3000);
+    }
 }
 
 // Auto-load interface status on page load

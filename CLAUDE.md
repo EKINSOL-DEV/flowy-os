@@ -20,6 +20,6 @@
 
 ## Key Reminders
 1. NEVER use Bash tool - always suggest commands for user to run
-2. Host OS ≠ Target Pi - they are different systems
+2. Host OS ≠ Target Pi - they are different systems. Reminder 1 does not apply if the command is intended for the HOST OS and NOT THE PI.
 3. User runs commands on Pi, reports results back
 4. Focus on suggesting the right commands, not executing them

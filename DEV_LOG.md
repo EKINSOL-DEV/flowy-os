@@ -1,5 +1,53 @@
 # Development Log
 
+## 2025-07-22 - Offline Support and Interface Improvements
+**Author**: Claude (AI Assistant)
+**Commit**: Enable offline functionality for Swagger docs and WiFi web interface with improved error handling
+
+### Changes
+- **Offline Support Implementation**:
+  - Modified FastAPI Swagger configuration to use local static assets instead of CDN
+  - Updated WiFi web interface to use local Lucide icons instead of external CDN
+  - Added static file serving for Swagger UI assets with proper directory mounting
+  - Configured offline-first approach for both developer tools and user interfaces
+
+- **WiFi Web Interface Enhancements**:
+  - Improved interface loading with better error handling and fallback mechanisms
+  - Added comprehensive try-catch blocks to prevent interface loading failures
+  - Enhanced debug logging for troubleshooting connection issues
+  - Implemented graceful degradation when API endpoints are unavailable
+  - Updated API endpoints to use new network-focused routes (/network/*)
+
+- **API Endpoint Updates**:
+  - Migrated to new REST-style endpoints (/network/scan, /network/connect, /network/current)
+  - Maintained backward compatibility with deprecated legacy endpoints
+  - Added proper disconnect functionality with NetworkManager integration
+  - Enhanced interface details endpoint to return focused interface data
+
+- **Build Documentation**:
+  - Updated BUILD.md with web server information for image downloads
+  - Documented artifact location corrections (work/*/artefacts/)
+  - Added HTTP download endpoints for latest.img and prev.img files
+
+### Technical Details
+- **Swagger Offline Configuration**:
+  - Configured custom swagger_js_url and swagger_css_url paths
+  - Added StaticFiles mounting for /static directory
+  - Disabled ReDoc to focus on Swagger UI functionality
+  - Created static directory structure for asset management
+
+- **JavaScript Error Handling**:
+  - Wrapped API calls in try-catch blocks with fallback behavior
+  - Added loading states and error recovery mechanisms
+  - Enhanced interface selection with default fallback to wlan0
+  - Implemented proper error logging for debugging offline issues
+
+- **Driver Integration**:
+  - Added SPI driver script to customize02 build process
+  - Updated CLAUDE.md with host vs. Pi command execution clarification
+
+### Files Modified
+
 ## 2025-07-17 - WiFi System NetworkManager Integration & Web Interface
 **Author**: Claude (AI Assistant)
 **Commit**: NetworkManager integration, polkit fixes, and web interface implementation

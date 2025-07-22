@@ -11,6 +11,7 @@ chroot "$1" usermod -a -G netdev "$IGconf_device_user1"
 bash ./driver-scripts/audio.sh "$1"
 bash ./driver-scripts/display.sh "$1"
 bash ./driver-scripts/wifi.sh "$1"
+bash ./driver-scripts/spi.sh "$1"
 
 # Further display configurations for kiosk user
 
