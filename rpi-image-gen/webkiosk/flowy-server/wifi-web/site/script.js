@@ -1,6 +1,24 @@
-const API_BASE = `http://${window.location.hostname}:10000`;
-let availableNetworks = [];
-let selectedInterface = 'wlan0';
+// Use var to avoid redeclaration errors
+var API_BASE = API_BASE || `http://${window.location.hostname}:10000`;
+var availableNetworks = availableNetworks || [];
+var selectedInterface = selectedInterface || 'wlan0';
+
+// Helper function to safely call lucide.createIcons()
+function createLucideIcons() {
+    console.log('createLucideIcons called');
+    console.log('typeof lucide:', typeof lucide);
+    console.log('window.lucide:', window.lucide);
+    
+    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        console.log('Calling lucide.createIcons()');
+        lucide.createIcons();
+    } else if (window.lucide && window.lucide.createIcons) {
+        console.log('Calling window.lucide.createIcons()');
+        window.lucide.createIcons();
+    } else {
+        console.log('Lucide not found, available globals:', Object.keys(window).filter(k => k.toLowerCase().includes('luc')));
+    }
+}
 
 async function apiCall(endpoint, method = 'GET', body = null) {
     try {
@@ -89,18 +107,18 @@ function onInterfaceChange() {
 async function getInterfaceStatus() {
     const statusDiv = document.getElementById('interface-status');
     statusDiv.innerHTML = '<div class="loading"><i data-lucide="loader-2"></i> Loading interface status...</div>';
-    lucide.createIcons();
+    createLucideIcons();
     
     const data = await apiCall(`/interface?interface_name=${selectedInterface}`);
     
     if (data.error) {
         statusDiv.innerHTML = `<div class="result-error"><i data-lucide="x-circle"></i> Error: ${data.error}</div>`;
-        lucide.createIcons();
+        createLucideIcons();
         return;
     }
     
     statusDiv.innerHTML = createInterfaceStatusDisplay(data);
-    lucide.createIcons();
+    createLucideIcons();
 }
 
 function createInterfaceStatusDisplay(data) {
@@ -151,7 +169,7 @@ function createInterfaceStatusDisplay(data) {
 async function scanNetworks() {
     const networksDiv = document.getElementById('networks-list');
     networksDiv.innerHTML = '<p class="loading"><i data-lucide="loader-2"></i> Scanning for networks...</p>';
-    lucide.createIcons();
+    createLucideIcons();
     
     const data = await apiCall(`/network/scan?interface_name=${selectedInterface}`);
     
@@ -159,13 +177,13 @@ async function scanNetworks() {
     
     if (data.error) {
         networksDiv.innerHTML = `<div class="result-error"><i data-lucide="x-circle"></i> Error: ${data.error}</div>`;
-        lucide.createIcons();
+        createLucideIcons();
         return;
     }
     
     if (!data || data.length === 0) {
         networksDiv.innerHTML = '<p><i data-lucide="wifi-off"></i> No networks found</p>';
-        lucide.createIcons();
+        createLucideIcons();
         return;
     }
     
@@ -199,7 +217,7 @@ async function scanNetworks() {
         `;
     });
     networksDiv.innerHTML = html;
-    lucide.createIcons();
+    createLucideIcons();
 }
 
 function createSignalBars(signal) {
@@ -300,7 +318,7 @@ async function connectToNetwork(event) {
     
     const resultDiv = document.getElementById('connection-result');
     resultDiv.innerHTML = '<p class="loading"><i data-lucide="loader-2"></i> Connecting to network...</p>';
-    lucide.createIcons();
+    createLucideIcons();
     
     const data = await apiCall('/network/connect', 'POST', {
         ssid,
@@ -317,7 +335,7 @@ async function connectToNetwork(event) {
     } else {
         resultDiv.innerHTML = `<div class="result-error"><i data-lucide="x-circle"></i> Failed to connect to ${ssid}</div>`;
     }
-    lucide.createIcons();
+    createLucideIcons();
 }
 
 async function getCurrentWifi() {
@@ -328,7 +346,7 @@ async function getCurrentWifi() {
             <div class="loading"><i data-lucide="loader-2"></i> Loading...</div>
         </div>
     `;
-    lucide.createIcons();
+    createLucideIcons();
     
     const data = await apiCall(`/network/current?interface_name=${selectedInterface}`);
     
@@ -339,19 +357,19 @@ async function getCurrentWifi() {
                 <div class="result-error"><i data-lucide="x-circle"></i> Error: ${data.error}</div>
             </div>
         `;
-        lucide.createIcons();
+        createLucideIcons();
         return;
     }
     
     if (!data.connected || !data.ssid) {
         currentWifiDiv.innerHTML = createCurrentWifiDisplay(null);
-        lucide.createIcons();
+        createLucideIcons();
         return;
     }
     
     // The new /network/current endpoint already includes all network details
     currentWifiDiv.innerHTML = createCurrentWifiDisplay(data);
-    lucide.createIcons();
+    createLucideIcons();
 }
 
 function createCurrentWifiDisplay(data) {
@@ -452,7 +470,7 @@ async function disconnectWifi() {
             Disconnecting...
         </div>
     `;
-    lucide.createIcons();
+    createLucideIcons();
     
     try {
         const result = await apiCall('/network/disconnect', 'POST', {interface_name: selectedInterface});
@@ -468,12 +486,12 @@ async function disconnectWifi() {
                     Failed to disconnect
                 </div>
             `;
-            lucide.createIcons();
+            createLucideIcons();
             
             // Restore original content after 3 seconds
             setTimeout(() => {
                 actionsDiv.innerHTML = originalContent;
-                lucide.createIcons();
+                createLucideIcons();
             }, 3000);
         }
     } catch (error) {
@@ -484,12 +502,12 @@ async function disconnectWifi() {
                 Error: ${error.message}
             </div>
         `;
-        lucide.createIcons();
+        createLucideIcons();
         
         // Restore original content after 3 seconds
         setTimeout(() => {
             actionsDiv.innerHTML = originalContent;
-            lucide.createIcons();
+            createLucideIcons();
         }, 3000);
     }
 }

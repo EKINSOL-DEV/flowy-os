@@ -24,7 +24,6 @@ chroot "$CHROOT_DIR" apt update
 chroot "$CHROOT_DIR" apt install -y \
     device-tree-compiler \
     build-essential \
-    linux-headers-rpi \
     spi-tools \
     i2c-tools \
     python3-spidev || true
@@ -35,7 +34,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 
 # Enable SPI interface
-if grep -q "dtparam=spi=on" "$CONFIG_FILE"; then
+if grep -q "^dtparam=spi=on" "$CONFIG_FILE"; then
     echo "SPI is already enabled in config.txt."
 else
     echo "Enabling SPI interface in config.txt..."
@@ -43,14 +42,26 @@ else
 
 # Enable SPI interface
 dtparam=spi=on
+
+# Pi 5 specific SPI configuration - enable both SPI buses
+dtoverlay=spi0-1cs
+dtoverlay=spi1-1cs
 EOF
-    echo "SPI interface enabled."
+    echo "SPI interface enabled with Pi 5 compatibility."
 fi
 
 echo "SPI interface configuration completed - ready for NFC and other SPI devices."
 
-# Add user to spi group for access permissions
-echo "Adding user to spi group..."
+# Create SPI group if it doesn't exist and add user
+echo "Setting up SPI permissions..."
+chroot "$CHROOT_DIR" groupadd -f spi
 chroot "$CHROOT_DIR" usermod -a -G spi "$IGconf_device_user1" || true
+
+# Create udev rule for SPI device permissions
+echo "Creating SPI device permissions..."
+cat > "$CHROOT_DIR/etc/udev/rules.d/99-spi.rules" << 'EOF'
+# Allow users in spi group to access SPI devices
+SUBSYSTEM=="spidev", GROUP="spi", MODE="0664"
+EOF
 
 echo "SPI configuration completed."

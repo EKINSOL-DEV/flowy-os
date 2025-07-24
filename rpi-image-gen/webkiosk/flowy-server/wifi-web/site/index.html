@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WiFi Dashboard</title>
     <link rel="stylesheet" href="style.css">
-    <script src="lucide.js"></script>
+    <script src="lucide.js" onload="console.log('Lucide.js loaded successfully')" onerror="console.error('Failed to load lucide.js')"></script>
+    <script>
+        console.log('After lucide.js: typeof lucide =', typeof lucide);
+        console.log('After lucide.js: window.lucide =', window.lucide);
+    </script>
 </head>
 <body>
     <div class="container">
@@ -96,8 +100,11 @@
 
     <script src="script.js"></script>
     <script>
-        // Initialize Lucide icons
-        lucide.createIcons();
+        // Initialize Lucide icons after everything loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing icons...');
+            createLucideIcons();
+        });
     </script>
 </body>
 </html>

@@ -76,7 +76,7 @@ The built image includes:
 ## Troubleshooting
 
 ### Build Failures
-- Ensure sufficient disk space (minimum 8GB free, but this shouldn't be a problem if you're running this on a server)
+- Ensure sufficient disk space (minimum 8GB free, but this shouldn't be a problem)
 - Check that all dependencies are installed
 - Verify network connectivity for package downloads
 

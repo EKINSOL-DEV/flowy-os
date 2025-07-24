@@ -56,7 +56,16 @@ async def get_css():
 @app.get("/script.js")
 async def get_js():
     """Serve the JavaScript file"""
-    response = FileResponse(os.path.join(site_dir, "script.js"))
+    response = FileResponse(os.path.join(site_dir, "script.js"), media_type="application/javascript")
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+@app.get("/lucide.js")
+async def get_lucide():
+    """Serve the Lucide JavaScript file"""
+    response = FileResponse(os.path.join(site_dir, "lucide.js"), media_type="application/javascript")
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
