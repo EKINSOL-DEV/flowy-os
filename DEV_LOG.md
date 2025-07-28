@@ -1,5 +1,43 @@
 # Development Log
 
+## 2025-07-28 - NFC Library Integration and Build System Refactoring
+**Author**: Claude (AI Assistant)
+**Commit**: Major refactoring of NFC build system with linux_libnfc-nci integration and improved build infrastructure
+
+### Changes
+- **NFC Library Integration**:
+  - Added linux_libnfc-nci as git submodule tracking 64bit_rpi_fixes branch
+  - Implemented automated NFC library building with --build-nfc parameter
+  - Added Python NFC module compilation and installation support
+  - Created comprehensive NFC library output management in output/libraries/
+  - Centralized all hardware dependencies in customize01 for better maintainability
+
+- **Build System Enhancements**:
+  - Refactored build-kiosk.sh with argument parsing and auto-trigger functionality
+  - Added FLOWY_OUTPUT_DIR environment variable to eliminate fragile relative paths
+  - Reorganized output structure: output/images/, output/libraries/, output/python/
+  - Implemented automatic NFC build triggering when libraries are missing
+  - Enhanced build documentation with comprehensive option explanations
+
+- **Hardware Configuration Improvements**:
+  - Replaced manual SPI/I2C configuration with official raspi-config approach
+  - Renamed spi.sh to raspi-config.sh for better clarity and broader hardware support
+  - Created dedicated nfc.sh script for NFC-specific library installation
+  - Added SSH enabling and improved user group management (spi, i2c, gpio)
+  - Streamlined hardware interface configuration with standard Pi tools
+
+- **Project Structure Cleanup**:
+  - Removed legacy nfc-rfal directory and related build scripts
+  - Cleaned up deprecated driver scripts and placeholder files
+  - Migrated from images/ to output/images/ for better organization
+  - Updated BUILD.md with comprehensive build options and NFC integration details
+
+- **Python Module Support**:
+  - Automated nfc_reader.py module copying and installation
+  - Added Python extension module (nfc_native) build integration
+  - Implemented proper site-packages installation for both C and Python modules
+  - Enhanced module availability with standard import support (import nfc_native, nfc_reader)
+
 ## 2025-07-22 - Offline Support and Interface Improvements
 **Author**: Claude (AI Assistant)
 **Commit**: Enable offline functionality for Swagger docs and WiFi web interface with improved error handling

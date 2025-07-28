@@ -1,7 +1,5 @@
-images/*
-!images/.gitkeep
-drivers/*
-!drivers/.gitkeep
+output/**
+!output/**/.gitkeep
 rpi-image-gen/deploy/*
 rpi-image-gen/work/*
 rpi-image-gen/legacy/*

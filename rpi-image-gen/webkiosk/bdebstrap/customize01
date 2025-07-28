@@ -1,7 +1,9 @@
 #!/bin/sh
 
-# pkgs we need for our kiosk
-chroot $1 apt install -y cage chromium python-is-python3 python3-pip python3.11-venv triggerhappy build-essential python3-dev plymouth plymouth-themes
+# pkgs we need for our kiosk and hardware support
+chroot $1 apt install -y cage chromium python-is-python3 python3-pip python3.11-venv triggerhappy build-essential python3-dev plymouth plymouth-themes \
+    raspi-config device-tree-compiler spi-tools i2c-tools python3-spidev python3-smbus \
+    libgpiod-dev libgpiod2 python3-libgpiod
 
 # Create flowy directory
 mkdir -p $1/flowy

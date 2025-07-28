@@ -19,7 +19,13 @@
 - All endpoints use NetworkManager as primary method with wpa_supplicant fallback
 
 ## Key Reminders
-1. NEVER use Bash tool - always suggest commands for user to run
-2. Host OS ≠ Target Pi - they are different systems. Reminder 1 does not apply if the command is intended for the HOST OS and NOT THE PI.
-3. User runs commands on Pi, reports results back
-4. Focus on suggesting the right commands, not executing them
+1. **Bash tool usage**: 
+   - ✅ USE Bash tool for HOST OS commands (development work, file operations, building, etc.)
+   - ✅ USE Bash tool for Pi commands when SSH'd into Pi environment
+   - ❌ NEVER use Bash tool to SSH into Pi or run Pi commands from host
+   - When in doubt: if you're currently in the target environment, use Bash tool
+2. Host OS ≠ Target Pi - they are different systems
+3. For Pi operations from host: suggest SSH commands for user to run
+4. Focus on using tools appropriately based on current environment
+5. NEVER give multi-line Python code in command suggestions - only one-liners allowed (copying from terminal adds extra spaces that break Python indentation)
+6. For multi-line Python code, create test files in a debug folder instead

@@ -4,41 +4,64 @@ This document provides instructions for building the FlowOS Raspberry Pi image u
 
 ## Prerequisites
 
-- **Build Environment**: Ubuntu/Linux development machine with the "builder" user
+- **Build Environment**: Ubuntu/Linux development machine with ARM64 architecture
 - **Target Hardware**: Raspberry Pi (CM4/CM5/Pi4/Pi5)
 - **Dependencies**: All required build dependencies are installed via the build system
+- **Permissions**: The builder user must have sudo access for cleanup operations
 
-## Build Process
-
-### 1. Connect to the Build Server
-
-The build must be executed on the remote server as the "builder" user:
+## Quick Start
 
 ```bash
-# Connect to the build server
-ssh builder@<server-address>
-```
-
-### 2. Navigate to the Project Directory
-
-```bash
+# Navigate to project directory
 cd ~/flowy-os
-```
 
-### 3. Execute the Build
-
-Run the automated build script:
-
-```bash
+# Standard build
 ./build-kiosk.sh
+
+# Build with NFC library rebuild (when NFC dependencies change)
+./build-kiosk.sh --build-nfc
+
+# View all options
+./build-kiosk.sh --help
 ```
 
-The build script performs the following operations:
-- Cleans any previous build artifacts from `rpi-image-gen/work`
-- Creates the `images` directory if it doesn't exist
-- Backs up the previous image (moves `latest.img` to `prev.img`)
-- Executes the underlying build system with the webkiosk configuration
-- Moves the completed image to `images/latest.img`
+## Build Script Options
+
+The `build-kiosk.sh` script supports the following arguments:
+
+| Option | Description |
+|--------|-------------|
+| `--build-nfc` | Rebuild NFC libraries from the git submodule before building the image |
+| `--help`, `-h` | Show usage information and available options |
+
+### NFC Library Building
+
+The `--build-nfc` option:
+1. Updates the `linux_libnfc-nci` git submodule (64bit_rpi_fixes branch)
+2. Configures and compiles the NFC libraries with 64-bit ARM fixes
+3. Copies the built libraries to `output/libraries/`
+4. Proceeds with the normal image build process
+
+Use this option when:
+- First time building the project
+- NFC library dependencies have been updated
+- You need fresh NFC library builds
+
+## Build Process Details
+
+The build script performs these operations:
+
+1. **Optional NFC Build** (if `--build-nfc` specified):
+   - Updates git submodules
+   - Builds `libnfc_nci_linux-1.so.0.0.0` and `libpn7160_fw.so.0.0.0`
+   - Copies libraries to `output/libraries/`
+
+2. **Image Build**:
+   - Cleans previous build artifacts from `rpi-image-gen/work`
+   - Creates the `output/images` directory
+   - Backs up previous image (`latest.img` → `prev.img`)
+   - Executes the underlying build system with webkiosk configuration
+   - Moves completed image to `output/images/latest.img`
 
 ### 4. Build Configuration
 
@@ -51,16 +74,23 @@ The build uses the following configuration:
 
 Upon successful completion, the build generates:
 
-- **Primary Image**: `images/latest.img` - The flashable Raspberry Pi image
-- **Backup Image**: `images/prev.img` - Previous build (if exists)
-- **Build Artifacts**: `rpi-image-gen/work/*/artefacts/` - Build intermediates and debugging files
+### Images
+- **Primary Image**: `output/images/latest.img` - The flashable Raspberry Pi image
+- **Backup Image**: `output/images/prev.img` - Previous build (if exists)
+
+### Libraries (when using --build-nfc)
+- **NFC Main Library**: `output/libraries/libnfc_nci_linux-1.so.0.0.0` - Core NFC functionality
+- **PN7160 Firmware**: `output/libraries/libpn7160_fw.so.0.0.0` - Hardware-specific firmware
+
+### Build Artifacts
+- **Debug Files**: `rpi-image-gen/work/*/artefacts/` - Build intermediates and debugging files
 
 ### Downloading Images
 
 A web server runs on port 80 providing easy access to download the built images:
 
-- **Latest Image**: `http://<server-address>/latest.img`
-- **Previous Image**: `http://<server-address>/prev.img`
+- **Latest Image**: `http://<server-address>/output/images/latest.img`
+- **Previous Image**: `http://<server-address>/output/images/prev.img`
 
 This allows convenient downloading of images without needing SSH/SCP access.
 
@@ -87,8 +117,20 @@ The built image includes:
 ### Clean Build
 To perform a completely clean build (removes previous images):
 ```bash
-sudo rm -rf images/
+sudo rm -rf output/images/
 ./build-kiosk.sh
+```
+
+### NFC Library Dependencies
+The project includes NFC functionality via the `linux_libnfc-nci` git submodule:
+- **Location**: `dependencies/linux_libnfc-nci/`
+- **Branch**: `64bit_rpi_fixes` (includes ARM64 compatibility fixes)
+- **Libraries**: Builds to `libnfc_nci_linux` and `libpn7160_fw` shared objects
+
+To update NFC dependencies:
+```bash
+git submodule update --remote dependencies/linux_libnfc-nci
+./build-kiosk.sh --build-nfc
 ```
 
 ## Build System Details

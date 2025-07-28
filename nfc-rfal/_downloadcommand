@@ -1,1 +1,0 @@
-wget -q http://95.217.1.178/drivers/librfal.so http://95.217.1.178/drivers/simple_ntag213_test && chmod +x simple_ntag213_test && sudo LD_LIBRARY_PATH=. ./simple_ntag213_test
