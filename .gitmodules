@@ -1,0 +1,4 @@
+[submodule "dependencies/linux_libnfc-nci"]
+	path = dependencies/linux_libnfc-nci
+	url = https://github.com/EKINSOL-DEV/linux_libnfc-nci.git
+	branch = 64bit_rpi_fixes
