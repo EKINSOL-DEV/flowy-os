@@ -1,5 +1,71 @@
 # Development Log
 
+## 2025-07-29 - Plymouth Theme System and Ethernet Network Support
+**Author**: Claude (AI Assistant)
+**Commit**: 04db249 - Theme packaging system and build improvements
+
+### Changes
+- **Plymouth Theme System**:
+  - Created comprehensive Plymouth theme packaging system with pack-themes.sh script
+  - Implemented baldi theme with spinning animation and state-based images (boot/shutdown/suspend/resume)
+  - Added theme archive extraction and installation in customize01 build process
+  - Created --pack-themes flag for build-kiosk.sh to package themes before building
+  - Themes are packaged as tar.xz archives for efficient distribution and installation
+
+- **Ethernet Interface Support** (Work in Progress):
+  - Extended flowy_wifi_lib.py with comprehensive ethernet interface detection using NetworkManager
+  - Added new API endpoints: /interfaces/ethernet, /interfaces/all for mixed interface support
+  - Updated web interface to display both WiFi and ethernet interfaces with type identification
+  - Implemented smart WiFi section disabling when ethernet interfaces are selected
+  - Added ethernet-specific information display: speed, duplex, physical link status, ethtool integration
+  - Changed dashboard branding from "WiFi Dashboard" to "Flowy Dashboard" for broader scope
+
+- **Build System Enhancements**:
+  - Added --pack-themes build flag for automated theme packaging workflow
+  - Enhanced theme packaging with automatic archive creation from themes/ directory
+  - Integrated theme installation into image build process with fallback handling
+  - Improved build organization with theme-specific output directory structure
+
+- **NFC Server Development**:
+  - Created comprehensive NFC API server with FastAPI framework
+  - Implemented proper NFC library integration and build improvements
+  - Enhanced NFC build system with better error handling and library management
+
+### Technical Details
+- **Plymouth Theme Architecture**:
+  - Themes stored in root themes/ directory for better organization
+  - pack-themes.sh creates compressed archives in output/themes/
+  - customize01 automatically extracts and installs baldi theme during image build
+  - Plymouth script supports multiple boot states with different imagery and animations
+  - Uses 48-frame spinning animation with smooth transitions and state-based messaging
+
+- **Ethernet Network Integration**:
+  - Uses NetworkManager nmcli commands for ethernet interface detection and status
+  - Implements ethtool integration for physical layer information (speed, duplex, link detection)
+  - Fallback to /sys filesystem when ethtool is unavailable or requires elevated permissions
+  - Web interface dynamically disables WiFi-specific features when ethernet interface selected
+  - Maintains consistent API structure between WiFi and ethernet interfaces for seamless integration
+
+- **User Experience Improvements**:
+  - Automatic interface type detection with clear labeling (WiFi/Ethernet)
+  - Smart feature disabling prevents user confusion when attempting WiFi operations on ethernet
+  - Comprehensive interface information display including physical connection status
+  - Consistent visual design between WiFi and ethernet interface presentations
+
+### Files Modified
+- `pack-themes.sh`: New script for theme packaging automation
+- `build-kiosk.sh`: Added --pack-themes flag and integration
+- `customize01`: Enhanced with theme installation and extraction logic
+- `themes/baldi/`: Complete Plymouth theme with animations and state images
+- `flowy_wifi_lib.py`: Extended with ethernet interface support functions
+- `flowy_wifi_api.py`: New ethernet endpoints and unified interface handling
+- `wifi-web/site/`: Updated web interface for mixed WiFi/ethernet support
+
+### Work in Progress
+- Ethernet interface support implementation is complete but not yet committed
+- Chromium kiosk scaling fix identified (--force-device-scale-factor=1.0) but needs testing
+- Theme system ready for production use with automated packaging and installation
+
 ## 2025-07-28 - NFC Library Integration and Build System Refactoring
 **Author**: Claude (AI Assistant)
 **Commit**: Major refactoring of NFC build system with linux_libnfc-nci integration and improved build infrastructure
