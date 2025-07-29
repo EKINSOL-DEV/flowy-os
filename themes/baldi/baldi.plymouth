@@ -1,0 +1,15 @@
+[Plymouth Theme]
+Name=Baldi
+Description=That's meeee
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/baldi/gfx
+ScriptFile=/usr/share/plymouth/themes/baldi/baldi.script
+
+[boot-up]
+ScriptFile=/usr/share/plymouth/themes/baldi/baldi.script
+[shutdown]
+ScriptFile=/usr/share/plymouth/themes/baldi/baldi.script
+[reboot]
+ScriptFile=/usr/share/plymouth/themes/baldi/baldi.script

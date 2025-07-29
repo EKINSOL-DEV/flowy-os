@@ -1,0 +1,311 @@
+01:19:05.610 main.c:1907:check_logging                                     : checking if console messages should be redirected and logged
+01:19:05.610 main.c:1916:check_logging                                     : logging will be enabled!
+01:19:05.610 main.c:1986:initialize_environment                            : source built on Feb 10 2023
+01:19:05.610 main.c:1996:initialize_environment                            : Making sure /run/plymouth exists
+01:19:05.610 ply-utils.c:596:ply_create_directory                          : directory '/run/plymouth' already exists
+01:19:05.610 main.c:2000:initialize_environment                            : initialized minimal work environment
+01:19:05.610 main.c:700:get_cache_file_for_mode                            : returning cache file '/var/lib/plymouth//boot-duration'
+01:19:05.610 main.c:303:load_settings                                      : Trying to load /etc/plymouth//plymouthd.conf
+01:19:05.610 ply-key-file.c:175:ply_key_file_load_group                    : trying to load group Daemon
+01:19:05.610 ply-key-file.c:262:ply_key_file_load_groups                   : key file has no more groups
+01:19:05.610 ply-key-file.c:359:ply_key_file_get_raw_value                 : key file does not have entry for key 'ThemeDir'
+01:19:05.610 main.c:285:get_theme_path                                     : Theme /run/plymouth/themes//baldi/baldi.plymouth not found
+01:19:05.610 main.c:282:get_theme_path                                     : Theme is /usr/share/plymouth/themes//baldi/baldi.plymouth
+01:19:05.610 ply-key-file.c:359:ply_key_file_get_raw_value                 : key file does not have entry for key 'ShowDelay'
+01:19:05.610 main.c:321:load_settings                                      : Splash delay is set to nan
+01:19:05.610 ply-key-file.c:359:ply_key_file_get_raw_value                 : key file does not have entry for key 'DeviceTimeout'
+01:19:05.610 main.c:326:load_settings                                      : Device timeout is set to nan
+01:19:05.610 ply-key-file.c:359:ply_key_file_get_raw_value                 : key file does not have entry for key 'DeviceScale'
+01:19:05.610 main.c:419:find_system_default_splash                         : System configured theme file is '/usr/share/plymouth/themes//baldi/baldi.plymouth'
+01:19:05.610 main.c:303:load_settings                                      : Trying to load /run/plymouth/plymouthd.defaults
+01:19:05.610 ply-key-file.c:84:ply_key_file_open_file                      : Failed to open key file /run/plymouth/plymouthd.defaults: No such file or directory
+01:19:05.610 main.c:429:find_distribution_default_splash                   : failed to load /run/plymouth/plymouthd.defaults, trying /usr/share/plymouth//
+01:19:05.610 main.c:303:load_settings                                      : Trying to load /usr/share/plymouth//plymouthd.defaults
+01:19:05.610 ply-key-file.c:175:ply_key_file_load_group                    : trying to load group Daemon
+01:19:05.610 ply-key-file.c:262:ply_key_file_load_groups                   : key file has no more groups
+01:19:05.610 ply-key-file.c:359:ply_key_file_get_raw_value                 : key file does not have entry for key 'ThemeDir'
+01:19:05.610 main.c:285:get_theme_path                                     : Theme /run/plymouth/themes//emerald/emerald.plymouth not found
+01:19:05.610 main.c:285:get_theme_path                                     : Theme /usr/share/plymouth/themes//emerald/emerald.plymouth not found
+01:19:05.610 main.c:321:load_settings                                      : Splash delay is set to 0.000000
+01:19:05.610 main.c:326:load_settings                                      : Device timeout is set to 8.000000
+01:19:05.610 ply-key-file.c:359:ply_key_file_get_raw_value                 : key file does not have entry for key 'DeviceScale'
+01:19:05.610 main.c:873:plymouth_should_show_default_splash                : checking if plymouth should show default splash
+01:19:05.610 main.c:901:plymouth_should_show_default_splash                : using default splash because kernel command line has option "splash"
+01:19:05.610 ply-key-file.c:84:ply_key_file_open_file                      : Failed to open key file /etc/default/keyboard: No such file or directory
+01:19:05.610 ply-device-manager.c:937:create_devices_from_terminals        : checking for consoles
+01:19:05.610 ply-device-manager.c:941:create_devices_from_terminals        : ignoring all consoles but default console because explicitly told to.
+01:19:05.610 ply-device-manager.c:537:watch_for_udev_events                : watching for udev graphics device add and remove events
+01:19:05.611 ply-device-manager.c:324:create_devices_for_subsystem         : creating objects for drm devices
+01:19:05.612 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/1000120000.pcie/1f00130000.dsi/drm/card1
+01:19:05.612 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:05.612 ply-device-manager.c:360:create_devices_for_subsystem         : found node /dev/dri/card1
+01:19:05.612 ply-device-manager.c:280:create_devices_for_udev_device       : device subsystem is drm
+01:19:05.612 ply-device-manager.c:283:create_devices_for_udev_device       : found DRM device /dev/dri/card1
+01:19:05.612 ply-device-manager.c:849:create_devices_for_terminal_and_rende: creating devices for /dev/dri/card1 (renderer type: 1) (terminal: /dev/tty1)
+01:19:05.612 ply-renderer.c:236:ply_renderer_open_plugin                   : trying to open renderer plugin /usr/lib/aarch64-linux-gnu/plymouth/renderers/drm.so
+01:19:05.612 plugin.c:876:create_backend                                   : creating renderer backend for device /dev/dri/card1
+01:19:05.612 plugin.c:956:load_driver                                      : Opening '/dev/dri/card1'
+01:19:05.612 ply-terminal.c:637:ply_terminal_open                          : trying to open terminal '/dev/tty1'
+01:19:05.612 ply-terminal.c:430:ply_terminal_refresh_geometry              : looking up terminal text geometry
+01:19:05.612 ply-terminal.c:442:ply_terminal_refresh_geometry              : terminal is now 100x80 text cells
+01:19:05.612 ply-terminal.c:480:get_active_vt                              : Remembering that initial vt is 2
+01:19:05.612 plugin.c:1377:create_heads_for_active_connectors              : (Re)enumerating all outputs
+01:19:05.612 plugin.c:1057:output_get_controller_info                      : Found already lit monitor on connector 36 using controller 34
+01:19:05.612 plugin.c:1066:output_get_controller_info                      : connector 36 encoder 35 possible controllers 0x00000001/0x00000001
+01:19:05.612 plugin.c:535:ply_renderer_connector_get_rotation_and_tiled    : link-status 0
+01:19:05.612 plugin.c:1127:get_preferred_mode                              : Found preferred mode 800x1280 at index 0
+01:19:05.612 plugin.c:1446:create_heads_for_active_connectors              : Using controller 34 for connector 36
+01:19:05.612 plugin.c:576:ply_renderer_head_add_connector                  : Adding connector with id 36 to 800x1280 head
+01:19:05.612 plugin.c:624:ply_renderer_head_new                            : Creating 800x1280 renderer head
+01:19:05.616 plugin.c:1488:create_heads_for_active_connectors              : outputs changed
+
+01:19:05.616 plugin.c:246:ply_renderer_buffer_new                          : returning 1x1 buffer with stride 4
+01:19:05.616 ply-renderer.c:256:ply_renderer_open_plugin                   : opened renderer plugin /usr/lib/aarch64-linux-gnu/plymouth/renderers/drm.so
+01:19:05.616 main.c:994:on_keyboard_added                                  : listening for keystrokes
+01:19:05.617 main.c:998:on_keyboard_added                                  : listening for escape
+01:19:05.617 main.c:1002:on_keyboard_added                                 : listening for backspace
+01:19:05.617 main.c:1006:on_keyboard_added                                 : listening for enter
+01:19:05.617 ply-device-manager.c:786:create_pixel_displays_for_renderer   : Adding displays for 1 heads
+01:19:05.617 ply-terminal.c:430:ply_terminal_refresh_geometry              : looking up terminal text geometry
+01:19:05.617 ply-terminal.c:442:ply_terminal_refresh_geometry              : terminal is now 100x80 text cells
+01:19:05.617 ply-device-manager.c:822:create_text_displays_for_terminal    : adding text display for terminal /dev/tty1
+01:19:05.617 ply-device-manager.c:364:create_devices_for_subsystem         : framebuffer other than fb0 found - ignoring
+01:19:05.617 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/1000120000.pcie/1f00130000.dsi/drm/card1/card1-DSI-2
+01:19:05.617 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:05.617 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/1002000000.v3d/drm/card0
+01:19:05.617 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:05.617 ply-device-manager.c:360:create_devices_for_subsystem         : found node /dev/dri/card0
+01:19:05.617 ply-device-manager.c:280:create_devices_for_udev_device       : device subsystem is drm
+01:19:05.617 ply-device-manager.c:283:create_devices_for_udev_device       : found DRM device /dev/dri/card0
+01:19:05.617 ply-device-manager.c:849:create_devices_for_terminal_and_rende: creating devices for /dev/dri/card0 (renderer type: 1) (terminal: none)
+01:19:05.617 ply-renderer.c:236:ply_renderer_open_plugin                   : trying to open renderer plugin /usr/lib/aarch64-linux-gnu/plymouth/renderers/drm.so
+01:19:05.617 plugin.c:876:create_backend                                   : creating renderer backend for device /dev/dri/card0
+01:19:05.617 plugin.c:956:load_driver                                      : Opening '/dev/dri/card0'
+01:19:05.617 plugin.c:1538:query_device                                    : Could not get card resources
+01:19:05.617 ply-renderer.c:249:ply_renderer_open_plugin                   : could not query rendering device for plugin /usr/lib/aarch64-linux-gnu/plymouth/renderers/drm.so
+01:19:05.617 plugin.c:1023:close_device                                    : closing device
+01:19:05.617 plugin.c:977:unload_backend                                   : unloading backend
+01:19:05.617 plugin.c:901:destroy_backend                                  : destroying renderer backend for device /dev/dri/card0
+01:19:05.617 ply-renderer.c:287:ply_renderer_open                          : could not find suitable rendering plugin
+01:19:05.617 ply-device-manager.c:857:create_devices_for_terminal_and_rende: could not open renderer for /dev/dri/card0
+01:19:05.617 ply-device-manager.c:364:create_devices_for_subsystem         : framebuffer other than fb0 found - ignoring
+01:19:05.617 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/1002000000.v3d/drm/renderD128
+01:19:05.617 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:05.617 ply-device-manager.c:360:create_devices_for_subsystem         : found node /dev/dri/renderD128
+01:19:05.617 ply-device-manager.c:280:create_devices_for_udev_device       : device subsystem is drm
+01:19:05.617 ply-device-manager.c:283:create_devices_for_udev_device       : found DRM device /dev/dri/renderD128
+01:19:05.617 ply-device-manager.c:849:create_devices_for_terminal_and_rende: creating devices for /dev/dri/renderD128 (renderer type: 1) (terminal: none)
+01:19:05.617 ply-renderer.c:236:ply_renderer_open_plugin                   : trying to open renderer plugin /usr/lib/aarch64-linux-gnu/plymouth/renderers/drm.so
+01:19:05.617 plugin.c:876:create_backend                                   : creating renderer backend for device /dev/dri/renderD128
+01:19:05.617 plugin.c:956:load_driver                                      : Opening '/dev/dri/renderD128'
+01:19:05.617 plugin.c:1538:query_device                                    : Could not get card resources
+01:19:05.617 ply-renderer.c:249:ply_renderer_open_plugin                   : could not query rendering device for plugin /usr/lib/aarch64-linux-gnu/plymouth/renderers/drm.so
+01:19:05.617 plugin.c:1023:close_device                                    : closing device
+01:19:05.617 plugin.c:977:unload_backend                                   : unloading backend
+01:19:05.617 plugin.c:901:destroy_backend                                  : destroying renderer backend for device /dev/dri/renderD128
+01:19:05.617 ply-renderer.c:287:ply_renderer_open                          : could not find suitable rendering plugin
+01:19:05.617 ply-device-manager.c:857:create_devices_for_terminal_and_rende: could not open renderer for /dev/dri/renderD128
+01:19:05.617 ply-device-manager.c:364:create_devices_for_subsystem         : framebuffer other than fb0 found - ignoring
+01:19:05.617 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/axi:gpu/drm/card2
+01:19:05.617 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:05.617 ply-device-manager.c:360:create_devices_for_subsystem         : found node /dev/dri/card2
+01:19:05.617 ply-device-manager.c:280:create_devices_for_udev_device       : device subsystem is drm
+01:19:05.617 ply-device-manager.c:283:create_devices_for_udev_device       : found DRM device /dev/dri/card2
+01:19:05.617 ply-device-manager.c:849:create_devices_for_terminal_and_rende: creating devices for /dev/dri/card2 (renderer type: 1) (terminal: none)
+01:19:05.617 ply-renderer.c:236:ply_renderer_open_plugin                   : trying to open renderer plugin /usr/lib/aarch64-linux-gnu/plymouth/renderers/drm.so
+01:19:05.617 plugin.c:876:create_backend                                   : creating renderer backend for device /dev/dri/card2
+01:19:05.617 plugin.c:956:load_driver                                      : Opening '/dev/dri/card2'
+01:19:05.617 plugin.c:1377:create_heads_for_active_connectors              : (Re)enumerating all outputs
+01:19:05.617 plugin.c:1057:output_get_controller_info                      : Found already lit monitor on connector 42 using controller 104
+01:19:05.617 plugin.c:1066:output_get_controller_info                      : connector 42 encoder 41 possible controllers 0x00000008/0x00000008
+01:19:05.617 plugin.c:535:ply_renderer_connector_get_rotation_and_tiled    : link-status 0
+01:19:05.617 plugin.c:1127:get_preferred_mode                              : Found preferred mode 2560x1440 at index 0
+01:19:05.617 plugin.c:1446:create_heads_for_active_connectors              : Using controller 0 for connector 33
+01:19:05.618 plugin.c:1446:create_heads_for_active_connectors              : Using controller 104 for connector 42
+01:19:05.618 plugin.c:576:ply_renderer_head_add_connector                  : Adding connector with id 42 to 2560x1440 head
+01:19:05.618 plugin.c:624:ply_renderer_head_new                            : Creating 2560x1440 renderer head
+01:19:05.632 plugin.c:1488:create_heads_for_active_connectors              : outputs changed
+
+01:19:05.632 plugin.c:246:ply_renderer_buffer_new                          : returning 1x1 buffer with stride 4
+01:19:05.632 ply-renderer.c:256:ply_renderer_open_plugin                   : opened renderer plugin /usr/lib/aarch64-linux-gnu/plymouth/renderers/drm.so
+01:19:05.633 main.c:994:on_keyboard_added                                  : listening for keystrokes
+01:19:05.633 main.c:998:on_keyboard_added                                  : listening for escape
+01:19:05.633 main.c:1002:on_keyboard_added                                 : listening for backspace
+01:19:05.633 main.c:1006:on_keyboard_added                                 : listening for enter
+01:19:05.633 ply-device-manager.c:786:create_pixel_displays_for_renderer   : Adding displays for 1 heads
+01:19:05.633 ply-device-manager.c:364:create_devices_for_subsystem         : framebuffer other than fb0 found - ignoring
+01:19:05.633 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/axi:gpu/drm/card2/card2-HDMI-A-1
+01:19:05.633 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:05.633 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/axi:gpu/drm/card2/card2-HDMI-A-2
+01:19:05.633 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:05.633 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/axi:gpu/drm/card2/card2-Writeback-1
+01:19:05.633 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:05.633 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/axi:gpu/drm/card2/card2-Writeback-2
+01:19:05.633 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:05.633 main.c:2348:main                                              : entering event loop
+01:19:13.640 ply-device-manager.c:980:create_devices_from_udev             : Timeout elapsed, looking for devices from udev
+01:19:13.640 ply-device-manager.c:324:create_devices_for_subsystem         : creating objects for drm devices
+01:19:13.641 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/1000120000.pcie/1f00130000.dsi/drm/card1
+01:19:13.641 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:13.641 ply-device-manager.c:360:create_devices_for_subsystem         : found node /dev/dri/card1
+01:19:13.641 ply-device-manager.c:280:create_devices_for_udev_device       : device subsystem is drm
+01:19:13.641 ply-device-manager.c:283:create_devices_for_udev_device       : found DRM device /dev/dri/card1
+01:19:13.641 ply-device-manager.c:845:create_devices_for_terminal_and_rende: ignoring device /dev/dri/card1 since it's already managed
+01:19:13.641 ply-device-manager.c:364:create_devices_for_subsystem         : framebuffer other than fb0 found - ignoring
+01:19:13.641 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/1000120000.pcie/1f00130000.dsi/drm/card1/card1-DSI-2
+01:19:13.641 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:13.641 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/1002000000.v3d/drm/card0
+01:19:13.641 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:13.641 ply-device-manager.c:360:create_devices_for_subsystem         : found node /dev/dri/card0
+01:19:13.641 ply-device-manager.c:280:create_devices_for_udev_device       : device subsystem is drm
+01:19:13.641 ply-device-manager.c:283:create_devices_for_udev_device       : found DRM device /dev/dri/card0
+01:19:13.641 ply-device-manager.c:849:create_devices_for_terminal_and_rende: creating devices for /dev/dri/card0 (renderer type: 1) (terminal: none)
+01:19:13.641 ply-renderer.c:236:ply_renderer_open_plugin                   : trying to open renderer plugin /usr/lib/aarch64-linux-gnu/plymouth/renderers/drm.so
+01:19:13.641 plugin.c:876:create_backend                                   : creating renderer backend for device /dev/dri/card0
+01:19:13.641 plugin.c:956:load_driver                                      : Opening '/dev/dri/card0'
+01:19:13.641 plugin.c:1538:query_device                                    : Could not get card resources
+01:19:13.641 ply-renderer.c:249:ply_renderer_open_plugin                   : could not query rendering device for plugin /usr/lib/aarch64-linux-gnu/plymouth/renderers/drm.so
+01:19:13.641 plugin.c:1023:close_device                                    : closing device
+01:19:13.641 plugin.c:977:unload_backend                                   : unloading backend
+01:19:13.641 plugin.c:901:destroy_backend                                  : destroying renderer backend for device /dev/dri/card0
+01:19:13.641 ply-renderer.c:287:ply_renderer_open                          : could not find suitable rendering plugin
+01:19:13.641 ply-device-manager.c:857:create_devices_for_terminal_and_rende: could not open renderer for /dev/dri/card0
+01:19:13.641 ply-device-manager.c:364:create_devices_for_subsystem         : framebuffer other than fb0 found - ignoring
+01:19:13.641 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/1002000000.v3d/drm/renderD128
+01:19:13.641 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:13.641 ply-device-manager.c:360:create_devices_for_subsystem         : found node /dev/dri/renderD128
+01:19:13.641 ply-device-manager.c:280:create_devices_for_udev_device       : device subsystem is drm
+01:19:13.641 ply-device-manager.c:283:create_devices_for_udev_device       : found DRM device /dev/dri/renderD128
+01:19:13.641 ply-device-manager.c:849:create_devices_for_terminal_and_rende: creating devices for /dev/dri/renderD128 (renderer type: 1) (terminal: none)
+01:19:13.642 ply-renderer.c:236:ply_renderer_open_plugin                   : trying to open renderer plugin /usr/lib/aarch64-linux-gnu/plymouth/renderers/drm.so
+01:19:13.642 plugin.c:876:create_backend                                   : creating renderer backend for device /dev/dri/renderD128
+01:19:13.642 plugin.c:956:load_driver                                      : Opening '/dev/dri/renderD128'
+01:19:13.642 plugin.c:1538:query_device                                    : Could not get card resources
+01:19:13.642 ply-renderer.c:249:ply_renderer_open_plugin                   : could not query rendering device for plugin /usr/lib/aarch64-linux-gnu/plymouth/renderers/drm.so
+01:19:13.642 plugin.c:1023:close_device                                    : closing device
+01:19:13.642 plugin.c:977:unload_backend                                   : unloading backend
+01:19:13.642 plugin.c:901:destroy_backend                                  : destroying renderer backend for device /dev/dri/renderD128
+01:19:13.642 ply-renderer.c:287:ply_renderer_open                          : could not find suitable rendering plugin
+01:19:13.642 ply-device-manager.c:857:create_devices_for_terminal_and_rende: could not open renderer for /dev/dri/renderD128
+01:19:13.642 ply-device-manager.c:364:create_devices_for_subsystem         : framebuffer other than fb0 found - ignoring
+01:19:13.642 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/axi:gpu/drm/card2
+01:19:13.642 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:13.642 ply-device-manager.c:360:create_devices_for_subsystem         : found node /dev/dri/card2
+01:19:13.642 ply-device-manager.c:280:create_devices_for_udev_device       : device subsystem is drm
+01:19:13.642 ply-device-manager.c:283:create_devices_for_udev_device       : found DRM device /dev/dri/card2
+01:19:13.642 ply-device-manager.c:845:create_devices_for_terminal_and_rende: ignoring device /dev/dri/card2 since it's already managed
+01:19:13.642 ply-device-manager.c:364:create_devices_for_subsystem         : framebuffer other than fb0 found - ignoring
+01:19:13.642 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/axi:gpu/drm/card2/card2-HDMI-A-1
+01:19:13.642 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:13.642 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/axi:gpu/drm/card2/card2-HDMI-A-2
+01:19:13.642 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:13.642 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/axi:gpu/drm/card2/card2-Writeback-1
+01:19:13.642 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:13.642 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/axi:gpu/drm/card2/card2-Writeback-2
+01:19:13.642 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:13.642 ply-device-manager.c:324:create_devices_for_subsystem         : creating objects for frame buffer devices
+01:19:13.642 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/1000120000.pcie/1f00130000.dsi/graphics/fb0
+01:19:13.642 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:13.642 ply-device-manager.c:360:create_devices_for_subsystem         : found node /dev/fb0
+01:19:13.642 ply-device-manager.c:280:create_devices_for_udev_device       : device subsystem is graphics
+01:19:13.642 ply-device-manager.c:286:create_devices_for_udev_device       : found frame buffer device /dev/fb0
+01:19:13.643 ply-device-manager.c:236:fb_device_has_drm_device             : trying to find associated drm node for fb device (path: platform-1f00130000.dsi)
+01:19:13.643 ply-device-manager.c:290:create_devices_for_udev_device       : ignoring, since there's a DRM device associated with it
+01:19:13.643 ply-device-manager.c:280:create_devices_for_udev_device       : device subsystem is graphics
+01:19:13.643 ply-device-manager.c:286:create_devices_for_udev_device       : found frame buffer device /dev/fb0
+01:19:13.643 ply-device-manager.c:236:fb_device_has_drm_device             : trying to find associated drm node for fb device (path: platform-1f00130000.dsi)
+01:19:13.643 ply-device-manager.c:290:create_devices_for_udev_device       : ignoring, since there's a DRM device associated with it
+01:19:13.643 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/platform/axi/axi:gpu/graphics/fb1
+01:19:13.643 ply-device-manager.c:351:create_devices_for_subsystem         : device is initialized
+01:19:13.643 ply-device-manager.c:360:create_devices_for_subsystem         : found node /dev/fb1
+01:19:13.643 ply-device-manager.c:280:create_devices_for_udev_device       : device subsystem is graphics
+01:19:13.643 ply-device-manager.c:286:create_devices_for_udev_device       : found frame buffer device /dev/fb1
+01:19:13.643 ply-device-manager.c:236:fb_device_has_drm_device             : trying to find associated drm node for fb device (path: platform-axi:gpu)
+01:19:13.644 ply-device-manager.c:290:create_devices_for_udev_device       : ignoring, since there's a DRM device associated with it
+01:19:13.644 ply-device-manager.c:364:create_devices_for_subsystem         : framebuffer other than fb0 found - ignoring
+01:19:13.644 ply-device-manager.c:344:create_devices_for_subsystem         : found device /sys/devices/virtual/graphics/fbcon
+01:19:13.644 ply-device-manager.c:370:create_devices_for_subsystem         : it's not initialized
+01:19:16.126 ply-boot-server.c:393:print_connection_process_identity       : connection is from pid 15496 (plymouth --show-splash) with parent pid 15495 (sudo plymouth --show-splash)
+01:19:16.126 ply-boot-server.c:492:ply_boot_connection_on_request          : got show splash request
+01:19:16.126 main.c:841:plymouth_should_ignore_show_splash_calls           : checking if plymouth should be running
+01:19:16.126 main.c:943:on_show_splash                                     : at least one display already available, so loading splash
+01:19:16.126 main.c:873:plymouth_should_show_default_splash                : checking if plymouth should show default splash
+01:19:16.126 main.c:901:plymouth_should_show_default_splash                : using default splash because kernel command line has option "splash"
+01:19:16.126 main.c:446:show_default_splash                                : Showing splash screen
+01:19:16.126 main.c:454:show_default_splash                                : Trying system default splash
+01:19:16.126 main.c:1703:load_theme                                        : Loading boot splash theme '/usr/share/plymouth/themes//baldi/baldi.plymouth'
+01:19:16.126 ply-key-file.c:175:ply_key_file_load_group                    : trying to load group Plymouth Theme
+01:19:16.126 ply-key-file.c:175:ply_key_file_load_group                    : trying to load group script
+01:19:16.127 ply-key-file.c:262:ply_key_file_load_groups                   : key file has no more groups
+01:19:16.127 main.c:1719:load_theme                                        : attaching plugin to event loop
+01:19:16.127 main.c:1722:load_theme                                        : attaching progress to plugin
+01:19:16.127 ply-boot-splash.c:138:ply_boot_splash_add_pixel_display       : adding 800x1280 pixel display
+01:19:16.127 ply-boot-splash.c:138:ply_boot_splash_add_pixel_display       : adding 2560x1440 pixel display
+01:19:16.127 ply-device-manager.c:1100:ply_device_manager_activate_renderer: activating renderers
+01:19:16.127 ply-boot-splash.c:486:ply_boot_splash_show                    : showing splash screen
+01:19:16.127 plugin.c:424:show_splash_screen                               : starting boot animation
+01:19:16.127 plugin.c:302:start_animation                                  : parsing script file
+01:19:16.128 plugin.c:280:start_script_animation                           : executing script file
+01:19:16.142 plugin.c:731:ply_renderer_head_map                            : Creating buffer for 800x1280 renderer head
+01:19:16.143 plugin.c:246:ply_renderer_buffer_new                          : returning 800x1280 buffer with stride 3200
+01:19:16.143 plugin.c:739:ply_renderer_head_map                            : Mapping buffer for 800x1280 renderer head
+01:19:16.144 plugin.c:731:ply_renderer_head_map                            : Creating buffer for 2560x1440 renderer head
+01:19:16.152 plugin.c:246:ply_renderer_buffer_new                          : returning 2560x1440 buffer with stride 10240
+01:19:16.154 plugin.c:739:ply_renderer_head_map                            : Mapping buffer for 2560x1440 renderer head
+01:19:16.158 plugin.c:918:activate                                         : taking master and scanning out
+01:19:16.165 plugin.c:693:ply_renderer_head_set_scan_out_buffer            : Setting scan out buffer of 2560x1440 head to our buffer
+01:19:16.175 plugin.c:1698:flush_head                                      : Needed to reset scan out buffer on 2560x1440 renderer head
+01:19:16.179 ply-device-manager.c:1133:ply_device_manager_activate_keyboard: activating keyboards
+01:19:16.181 plugin.c:943:on_active_vt_changed                             : activating on vt change
+01:19:16.183 plugin.c:918:activate                                         : taking master and scanning out
+01:19:16.188 plugin.c:693:ply_renderer_head_set_scan_out_buffer            : Setting scan out buffer of 800x1280 head to our buffer
+01:19:16.202 plugin.c:1698:flush_head                                      : Needed to reset scan out buffer on 800x1280 renderer head
+01:19:16.202 ply-event-loop.c:1142:ply_event_loop_free_destinations_for_sou: freeing destination (1, 0x5558a17990, 0x5558a1ab30) of fd 12
+01:19:24.683 ply-boot-server.c:393:print_connection_process_identity       : connection is from pid 15500 (plymouth --quit) with parent pid 15499 (sudo plymouth --quit)
+01:19:24.683 ply-boot-server.c:530:ply_boot_connection_on_request          : got quit request
+01:19:24.683 main.c:1349:on_quit                                           : quitting (retain splash: false)
+01:19:24.683 main.c:1366:on_quit                                           : system not initialized so skipping saving boot-duration file
+01:19:24.683 main.c:1660:tell_systemd_to_stop_printing_details             : telling systemd to stop printing details
+01:19:24.683 main.c:1375:on_quit                                           : closing log
+01:19:24.683 ply-device-manager.c:1155:ply_device_manager_deactivate_keyboa: deactivating keyboards
+01:19:24.683 ply-event-loop.c:765:ply_event_loop_stop_watching_fd          : stopping watching fd 10
+01:19:24.683 ply-event-loop.c:781:ply_event_loop_stop_watching_fd          : removing destination for fd 10
+01:19:24.683 main.c:1381:on_quit                                           : unloading splash
+01:19:24.683 ply-boot-splash.c:687:ply_boot_splash_become_idle             : telling splash to become idle
+01:19:24.683 ply-boot-splash.c:663:on_idle                                 : splash now idle
+01:19:24.693 main.c:1252:on_boot_splash_idle                               : boot splash idle
+01:19:24.693 main.c:1259:on_boot_splash_idle                               : hiding splash
+01:19:24.693 plugin.c:934:deactivate                                       : dropping master
+01:19:24.693 plugin.c:934:deactivate                                       : dropping master
+01:19:24.693 ply-event-loop.c:971:ply_event_loop_stop_watching_for_timeout : no matching timeout found for removal
+01:19:24.727 main.c:1263:on_boot_splash_idle                               : quitting splash
+01:19:24.728 main.c:1127:quit_splash                                       : quitting splash
+01:19:24.729 main.c:1129:quit_splash                                       : freeing splash
+01:19:24.730 ply-boot-splash.c:390:ply_boot_splash_free                    : freeing splash
+01:19:24.731 ply-event-loop.c:971:ply_event_loop_stop_watching_for_timeout : no matching timeout found for removal
+01:19:24.738 ply-boot-splash.c:335:remove_pixel_displays                   : removing pixel displays
+01:19:24.740 ply-boot-splash.c:349:remove_pixel_displays                   : Removing 800x1280 pixel display
+01:19:24.742 ply-boot-splash.c:349:remove_pixel_displays                   : Removing 2560x1440 pixel display
+01:19:24.745 ply-device-manager.c:1155:ply_device_manager_deactivate_keyboa: deactivating keyboards
+01:19:24.748 main.c:1138:quit_splash                                       : Not retaining splash, so deallocating VT
+01:19:24.753 ply-terminal.c:996:ply_terminal_deactivate_vt                 : Attempting to set active vt back to 2 from 1
+01:19:24.759 ply-terminal.c:1013:ply_terminal_deactivate_vt                : couldn't deallocate vt 1: Device or resource busy
+01:19:24.759 ply-terminal.c:706:ply_terminal_close                         : restoring color palette
+01:19:24.760 ply-terminal.c:710:ply_terminal_close                         : stop watching tty fd
+01:19:24.760 ply-event-loop.c:765:ply_event_loop_stop_watching_fd          : stopping watching fd 10
+01:19:24.760 ply-event-loop.c:781:ply_event_loop_stop_watching_fd          : removing destination for fd 10
+01:19:24.760 ply-event-loop.c:790:ply_event_loop_stop_watching_fd          : no more destinations remaing for fd 10, removing source
+01:19:24.760 ply-terminal.c:716:ply_terminal_close                         : stop watching SIGWINCH signal
+01:19:24.760 ply-terminal.c:720:ply_terminal_close                         : setting buffered input
+01:19:24.760 main.c:1265:on_boot_splash_idle                               : quitting program
+01:19:24.760 main.c:1193:quit_program                                      : cleaning up devices
+01:19:24.760 ply-device-manager.c:674:ply_device_manager_free              : freeing device manager
+01:19:24.760 ply-renderer.c:92:ply_renderer_free                           : Unloading renderer backend plugin
+01:19:24.760 ply-renderer.c:92:ply_renderer_free                           : Unloading renderer backend plugin
+01:19:24.760 ply-event-loop.c:971:ply_event_loop_stop_watching_for_timeout : no matching timeout found for removal
+01:19:24.760 main.c:1196:quit_program                                      : exiting event loop
+01:19:24.760 ply-boot-server.c:347:ply_boot_connection_on_quit_complete    : quit complete
+01:19:24.760 main.c:2350:main                                              : exited event loop
+01:19:24.760 ply-boot-splash.c:390:ply_boot_splash_free                    : freeing splash
+01:19:24.760 main.c:2360:main                                              : freeing terminal session
+01:19:24.760 main.c:2366:main                                              : exiting with code 0
