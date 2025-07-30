@@ -61,6 +61,41 @@ class WpaSupplicantInterface:
         """Get interface name."""
         return self.interface_name
 
+def get_ethernet_interfaces():
+    """
+    Retrieve all ethernet interfaces on the device using NetworkManager.
+
+    Returns:
+        list: A list of ethernet interface names.
+    """
+    try:
+        result = subprocess.run(['nmcli', '--terse', '--fields', 'DEVICE,TYPE', 'device', 'status'], 
+                              capture_output=True, text=True)
+        
+        ethernet_interfaces = []
+        for line in result.stdout.split('\n'):
+            if line.strip():
+                parts = line.split(':')
+                if len(parts) >= 2 and parts[1] == 'ethernet':
+                    ethernet_interfaces.append(parts[0])
+        
+        return ethernet_interfaces
+    except Exception as e:
+        print(f"Error getting ethernet interfaces: {e}")
+        return []
+
+def get_all_interfaces():
+    """
+    Retrieve both wireless and ethernet interfaces on the device.
+
+    Returns:
+        dict: A dictionary with 'wifi' and 'ethernet' keys containing interface lists.
+    """
+    return {
+        'wifi': get_interfaces(),
+        'ethernet': get_ethernet_interfaces()
+    }
+
 def get_interfaces():
     """
     Retrieve all wireless interfaces on the device.
@@ -287,6 +322,84 @@ def get_interface_details(iface):
         return details
     
     return details
+
+def get_ethernet_details(interface_name):
+    """
+    Get detailed information about an ethernet interface using NetworkManager and ethtool.
+
+    Args:
+        interface_name (str): The name of the ethernet interface.
+
+    Returns:
+        dict: A dictionary with ethernet interface details.
+    """
+    details = {
+        "name": interface_name,
+        "type": "ethernet",
+        "status": "Disconnected",
+        "ip_address": None,
+        "mac_address": None,
+        "speed": None,
+        "duplex": None,
+        "link_detected": False
+    }
+    
+    try:
+        # Get basic info from NetworkManager
+        result = subprocess.run(['nmcli', 'device', 'show', interface_name], 
+                              capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            for line in result.stdout.split('\n'):
+                if 'GENERAL.STATE:' in line:
+                    state_parts = line.split()
+                    if len(state_parts) >= 2:
+                        state_num = state_parts[1]
+                        if '100' in state_num:
+                            details["status"] = "Connected"
+                        elif '30' in state_num:
+                            details["status"] = "Disconnected"
+                        elif '20' in state_num:
+                            details["status"] = "Unavailable"
+                        else:
+                            details["status"] = "Unknown"
+                            
+                elif 'IP4.ADDRESS[1]:' in line:
+                    ip_info = line.split(':')[1].strip()
+                    if '/' in ip_info:
+                        details["ip_address"] = ip_info.split('/')[0]
+                        
+                elif 'GENERAL.HWADDR:' in line:
+                    details["mac_address"] = line.split(':')[1].strip()
+        
+        # Get physical link status and speed using ethtool
+        try:
+            ethtool_result = subprocess.run(['ethtool', interface_name], 
+                                          capture_output=True, text=True)
+            
+            if ethtool_result.returncode == 0:
+                for line in ethtool_result.stdout.split('\n'):
+                    if 'Speed:' in line:
+                        details["speed"] = line.split(':')[1].strip()
+                    elif 'Duplex:' in line:
+                        details["duplex"] = line.split(':')[1].strip()
+                    elif 'Link detected:' in line:
+                        details["link_detected"] = 'yes' in line.lower()
+        except Exception:
+            # ethtool might not be available or require sudo
+            # Fallback to /sys filesystem
+            try:
+                with open(f'/sys/class/net/{interface_name}/operstate', 'r') as f:
+                    operstate = f.read().strip()
+                    details["link_detected"] = operstate == 'up'
+            except Exception:
+                pass
+            
+        return details
+        
+    except Exception as e:
+        details["status"] = f"ERROR: {str(e)}"
+        return details
 
 def get_interface_status(iface):
     """

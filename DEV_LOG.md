@@ -1,5 +1,60 @@
 # Development Log
 
+## 2025-07-30 - Display Rotation System Implementation
+**Author**: Claude (AI Assistant)  
+**Commit**: [Current] - Complete display rotation solution for Waveshare 10.1" DSI display
+
+### Changes
+- **Comprehensive Display Rotation Solution**:
+  - Implemented kernel-level display rotation using `video=DSI-2:800x1280M@60,panel_orientation=right_side_up`
+  - Added framebuffer console rotation with `fbcon=rotate:3` for CLI display
+  - Resolved Plymouth boot splash rotation using proper `panel_orientation` parameter
+  - Created integrated Python-based Wayland display rotation system within kioskserver
+
+- **Wayland Display Rotation**:
+  - Integrated wlr-randr display rotation directly into wifi-web FastAPI server
+  - Added automatic Wayland socket detection and rotation application on startup
+  - Implemented proper error handling and logging for rotation operations
+  - Eliminated circular dependency issues by removing separate systemd service
+
+- **Hardware Permissions and Setup**:
+  - Added `render` group membership to user setup in raspi-config.sh for GPU access
+  - Updated package installation to include `wlr-randr` for Wayland display control
+  - Fixed cage/Wayland compositor GPU access permissions for proper display rendering
+
+- **Touch Screen Coordination**:
+  - Updated udev rules with proper touch rotation matrix for 270-degree display rotation
+  - Added `ENV{LIBINPUT_CALIBRATION_MATRIX}="0 1 0 -1 0 1"` for coordinated touch input
+
+- **Boot Configuration Optimization**:
+  - Replaced aggressive Plymouth parameters with proper `panel_orientation` setting
+  - Maintained Plymouth custom theme compatibility while fixing rotation issues
+  - Optimized kernel command line for clean boot with proper display handling
+
+### Technical Details
+- **Display Rotation Architecture**:
+  - Kernel level: `video=DSI-2:800x1280M@60,panel_orientation=right_side_up` for hardware rotation
+  - Console level: `fbcon=rotate:3` for framebuffer console rotation  
+  - Wayland level: Python asyncio task with `wlr-randr --output DSI-2 --transform 270`
+  - Touch level: udev libinput calibration matrix for coordinated input
+
+- **Integration Approach**:
+  - Removed problematic systemd service dependencies that caused circular reference cycles
+  - Integrated rotation logic into existing kioskserver FastAPI application
+  - Uses asyncio for non-blocking Wayland socket detection and rotation application
+  - Waits up to 30 seconds for Wayland display availability with proper error handling
+
+- **Hardware Access Resolution**:
+  - Fixed cage compositor GPU access by adding user to `render` group
+  - Resolved `/dev/dri/renderD128` permission denied errors
+  - Ensured proper Wayland display creation for rotation commands
+
+### User Experience
+- **Boot-to-Desktop Rotation**: Complete landscape orientation from Plymouth splash through CLI to kiosk
+- **Automatic Recovery**: Display rotation automatically reapplies when services restart
+- **Error Resilience**: Graceful fallback and logging when rotation fails
+- **Persistent Configuration**: All rotation settings built into image for consistent behavior
+
 ## 2025-07-29 - Plymouth Theme System and Ethernet Network Support
 **Author**: Claude (AI Assistant)
 **Commit**: 04db249 - Theme packaging system and build improvements

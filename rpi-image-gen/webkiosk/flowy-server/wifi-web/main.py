@@ -1,5 +1,7 @@
 import os
 import logging
+import subprocess
+import asyncio
 from logging.handlers import RotatingFileHandler
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -21,12 +23,56 @@ logger = logging.getLogger("wifi_web")
 logger.setLevel(logging.INFO)
 logger.addHandler(handler)
 
+async def apply_display_rotation():
+    """Apply display rotation for Wayland kiosk"""
+    wayland_socket = "/home/flowy/wayland-0"
+    max_attempts = 30  # Wait up to 30 seconds
+    
+    logger.info("Waiting for Wayland display to be available...")
+    
+    for attempt in range(max_attempts):
+        if os.path.exists(wayland_socket):
+            try:
+                # Set environment variables for wlr-randr
+                env = os.environ.copy()
+                env["WAYLAND_DISPLAY"] = "wayland-0"
+                env["XDG_RUNTIME_DIR"] = "/home/flowy"
+                
+                # Apply rotation
+                result = subprocess.run(
+                    ["/usr/bin/wlr-randr", "--output", "DSI-2", "--transform", "270"],
+                    env=env,
+                    capture_output=True,
+                    text=True,
+                    timeout=10
+                )
+                
+                if result.returncode == 0:
+                    logger.info("Display rotation applied successfully")
+                    return
+                else:
+                    logger.warning(f"wlr-randr failed: {result.stderr}")
+            except subprocess.TimeoutExpired:
+                logger.warning("wlr-randr command timed out")
+            except Exception as e:
+                logger.error(f"Error applying display rotation: {e}")
+        
+        await asyncio.sleep(1)
+    
+    logger.error("Failed to apply display rotation - Wayland display not available")
+
 # Initialize FastAPI app
 app = FastAPI(
     title="WiFi Web Interface",
     description="Web interface for WiFi management",
     version="1.0.0"
 )
+
+@app.on_event("startup")
+async def startup_event():
+    """Background tasks to run on startup"""
+    # Start display rotation in background
+    asyncio.create_task(apply_display_rotation())
 
 # Get the directory where this script is located
 current_dir = os.path.dirname(os.path.abspath(__file__))

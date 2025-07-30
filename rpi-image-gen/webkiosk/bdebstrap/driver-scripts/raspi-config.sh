@@ -25,6 +25,6 @@ chroot "$CHROOT_DIR" raspi-config nonint do_ssh 0
 
 # Add user to hardware access groups
 echo "Setting up hardware device permissions..."
-chroot "$CHROOT_DIR" usermod -a -G spi,i2c,gpio "$IGconf_device_user1" || true
+chroot "$CHROOT_DIR" usermod -a -G spi,i2c,gpio,render "$IGconf_device_user1" || true
 
 echo "Raspberry Pi hardware interface configuration completed."

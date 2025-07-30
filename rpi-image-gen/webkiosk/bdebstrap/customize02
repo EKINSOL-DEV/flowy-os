@@ -14,24 +14,12 @@ bash ./driver-scripts/wifi.sh "$1"
 bash ./driver-scripts/raspi-config.sh "$1"
 bash ./driver-scripts/nfc.sh "$1"
 
-# Further display configurations for kiosk user
-
-
-USER_HOME="$1/home/$IGconf_device_user1"
-KANSHI_CONFIG="$USER_HOME/.config/kanshi/config"
-
-# Ensure the directory exists
-mkdir -p "$(dirname "$KANSHI_CONFIG")"
-
-# Create kanshi config for the kiosk user
-cat << 'EOF' > "$KANSHI_CONFIG"
-profile {
-                output DSI-2 enable mode 800x1280@60.080 position 0,0 transform 270
-}
+# Set up touch rotation to match display rotation (270 degrees)
+mkdir -p "$1/etc/udev/rules.d"
+cat > "$1/etc/udev/rules.d/99-waveshare-touch.rules" << 'EOF'
+# Touch rotation for 270 degree display rotation
+ENV{ID_INPUT_TOUCHSCREEN}=="1", ENV{LIBINPUT_CALIBRATION_MATRIX}="0 1 0 -1 0 1"
 EOF
-
-# Set proper ownership
-chroot "$1" chown -R "$IGconf_device_user1:$IGconf_device_user1" "/home/$IGconf_device_user1/.config"
 
 echo "Hardware drivers and display configuration completed."
 

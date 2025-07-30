@@ -50,7 +50,7 @@ async function loadInterfaces() {
     interfaceSelect.innerHTML = '<option value="">Loading interfaces...</option>';
     
     try {
-        const data = await apiCall('/interfaces');
+        const data = await apiCall('/interfaces/all');
         console.log('Interfaces data:', data); // Debug log
         
         if (data.error) {
@@ -59,32 +59,49 @@ async function loadInterfaces() {
             return;
         }
         
-        if (Array.isArray(data) && data.length > 0) {
-            interfaceSelect.innerHTML = '';
-            interfaceForm.innerHTML = '';
-            
-            data.forEach(iface => {
-                // Handle both string and object interfaces
-                const ifaceName = typeof iface === 'string' ? iface : iface.name || iface.interface || JSON.stringify(iface);
-                
+        interfaceSelect.innerHTML = '';
+        interfaceForm.innerHTML = '';
+        
+        // Add WiFi interfaces
+        if (Array.isArray(data.wifi) && data.wifi.length > 0) {
+            data.wifi.forEach(iface => {
                 const option = document.createElement('option');
-                option.value = ifaceName;
-                option.textContent = ifaceName;
+                option.value = iface.name;
+                option.textContent = `${iface.name} (WiFi)`;
+                option.dataset.type = 'wifi';
                 interfaceSelect.appendChild(option);
                 
                 const formOption = document.createElement('option');
-                formOption.value = ifaceName;
-                formOption.textContent = ifaceName;
+                formOption.value = iface.name;
+                formOption.textContent = `${iface.name} (WiFi)`;
                 interfaceForm.appendChild(formOption);
             });
+        }
+        
+        // Add Ethernet interfaces
+        if (Array.isArray(data.ethernet) && data.ethernet.length > 0) {
+            data.ethernet.forEach(iface => {
+                const option = document.createElement('option');
+                option.value = iface.name;
+                option.textContent = `${iface.name} (Ethernet)`;
+                option.dataset.type = 'ethernet';
+                interfaceSelect.appendChild(option);
+            });
+        }
+        
+        // Select first available interface (prefer WiFi over Ethernet)
+        if (interfaceSelect.children.length > 0) {
+            // Find first WiFi interface, fallback to first ethernet, then any
+            let firstWifi = Array.from(interfaceSelect.children).find(opt => opt.dataset.type === 'wifi');
+            let firstInterface = firstWifi || interfaceSelect.children[0];
             
-            selectedInterface = typeof data[0] === 'string' ? data[0] : data[0].name || data[0].interface || 'wlan0';
+            selectedInterface = firstInterface.value;
             interfaceSelect.value = selectedInterface;
             interfaceForm.value = selectedInterface;
         } else {
             console.log('No interfaces found, using default wlan0');
-            interfaceSelect.innerHTML = '<option value="wlan0">wlan0</option>';
-            interfaceForm.innerHTML = '<option value="wlan0">wlan0</option>';
+            interfaceSelect.innerHTML = '<option value="wlan0">wlan0 (fallback)</option>';
+            interfaceForm.innerHTML = '<option value="wlan0">wlan0 (fallback)</option>';
             selectedInterface = 'wlan0';
         }
     } catch (error) {
@@ -99,9 +116,39 @@ function onInterfaceChange() {
     const interfaceSelect = document.getElementById('interface-select');
     selectedInterface = interfaceSelect.value;
     document.getElementById('interface').value = selectedInterface;
+    
+    // Get the selected interface type
+    const selectedOption = interfaceSelect.options[interfaceSelect.selectedIndex];
+    const interfaceType = selectedOption.dataset.type;
+    
     // Clear current data
-    document.getElementById('interface-status').innerHTML = '<div class="status-placeholder">Click "Refresh Status" to load interface details...</div>';
-    document.getElementById('networks-list').innerHTML = '<div class="status-placeholder">Click "Scan Networks" to discover available WiFi networks...</div>';
+    document.getElementById('interface-status').innerHTML = '<div class="status-placeholder">Click the refresh icon to load interface details...</div>';
+    
+    // Disable/enable WiFi-specific sections based on interface type
+    const wifiSections = document.querySelectorAll('.wifi-only');
+    const wifiButtons = document.querySelectorAll('button[onclick*="scan"], button[onclick*="Network"]');
+    const networksList = document.getElementById('networks-list');
+    const connectCard = document.querySelector('.card:last-child');
+    
+    if (interfaceType === 'ethernet') {
+        // Disable WiFi-specific functionality
+        wifiButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+        });
+        networksList.innerHTML = '<div class="status-placeholder">Network scanning is not available for ethernet interfaces</div>';
+        connectCard.style.opacity = '0.5';
+        connectCard.style.pointerEvents = 'none';
+    } else {
+        // Enable WiFi functionality
+        wifiButtons.forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        });
+        networksList.innerHTML = '<div class="status-placeholder">Click "Scan Networks" to discover available WiFi networks...</div>';
+        connectCard.style.opacity = '1';
+        connectCard.style.pointerEvents = 'auto';
+    }
 }
 
 async function getInterfaceStatus() {
@@ -128,7 +175,7 @@ function createInterfaceStatusDisplay(data) {
         {
             icon: 'network',
             label: 'Interface',
-            value: data.name || selectedInterface
+            value: `${data.name || selectedInterface} (${data.type || 'Unknown'})`
         },
         {
             icon: 'activity',
@@ -151,6 +198,29 @@ function createInterfaceStatusDisplay(data) {
         });
     }
     
+    // Add ethernet-specific fields
+    if (data.type === 'ethernet') {
+        if (data.speed) {
+            statusItems.push({
+                icon: 'zap',
+                label: 'Speed',
+                value: data.speed
+            });
+        }
+        if (data.duplex) {
+            statusItems.push({
+                icon: 'shuffle',
+                label: 'Duplex',
+                value: data.duplex
+            });
+        }
+        statusItems.push({
+            icon: 'link',
+            label: 'Physical Link',
+            value: data.link_detected ? 'Connected' : 'Disconnected'
+        });
+    }
+    
     const statusItemsHtml = statusItems.map(item => `
         <div class="status-item">
             <div class="icon">
@@ -167,7 +237,19 @@ function createInterfaceStatusDisplay(data) {
 }
 
 async function scanNetworks() {
+    const interfaceSelect = document.getElementById('interface-select');
+    const selectedOption = interfaceSelect.options[interfaceSelect.selectedIndex];
+    const interfaceType = selectedOption.dataset.type;
+    
     const networksDiv = document.getElementById('networks-list');
+    
+    // Check if this is a WiFi interface
+    if (interfaceType !== 'wifi') {
+        networksDiv.innerHTML = '<div class="result-error"><i data-lucide="x-circle"></i> Network scanning is only available for WiFi interfaces</div>';
+        createLucideIcons();
+        return;
+    }
+    
     networksDiv.innerHTML = '<p class="loading"><i data-lucide="loader-2"></i> Scanning for networks...</p>';
     createLucideIcons();
     
@@ -311,6 +393,18 @@ function fillSSID(ssid) {
 
 async function connectToNetwork(event) {
     event.preventDefault();
+    
+    // Check if selected interface is WiFi
+    const interfaceSelect = document.getElementById('interface-select');
+    const selectedOption = interfaceSelect.options[interfaceSelect.selectedIndex];
+    const interfaceType = selectedOption.dataset.type;
+    
+    if (interfaceType !== 'wifi') {
+        const resultDiv = document.getElementById('connection-result');
+        resultDiv.innerHTML = '<div class="result-error"><i data-lucide="x-circle"></i> Network connection is only available for WiFi interfaces</div>';
+        createLucideIcons();
+        return;
+    }
     
     const ssid = document.getElementById('ssid').value;
     const password = document.getElementById('password').value;

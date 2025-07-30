@@ -6,9 +6,12 @@ from fastapi.middleware.cors import CORSMiddleware  # Optional: only needed if C
 from fastapi.staticfiles import StaticFiles
 from flowy_wifi_lib import (
     get_interfaces,
+    get_ethernet_interfaces,
+    get_all_interfaces,
     get_interface,
     get_interface_status,
     get_interface_details,
+    get_ethernet_details,
     scan_wifi,
     get_all_networks,
     get_current_wifi,
@@ -99,11 +102,127 @@ def get_interfaces_endpoint():
         return {"error": str(e)}
 
 
+@app.get("/interfaces/ethernet", summary="Get Ethernet Interfaces",
+         description="Retrieve all available ethernet interfaces on the device with their status.")
+def get_ethernet_interfaces_endpoint():
+    logger.info("Retrieving all ethernet interfaces")
+    try:
+        interface_names = get_ethernet_interfaces()
+        logger.info(f"Found ethernet interface names: {interface_names}")
+        
+        # Transform the interface names into a JSON serializable format with status
+        iface_list = []
+        for name in interface_names:
+            logger.info(f"Processing ethernet interface: {name}")
+            try:
+                details = get_ethernet_details(name)
+                logger.info(f"Details for {name}: {details}")
+                iface_list.append({
+                    "name": name,
+                    "type": "ethernet",
+                    "status": details.get("status", "Unknown"),
+                    "ip_address": details.get("ip_address"),
+                    "mac_address": details.get("mac_address"),
+                    "speed": details.get("speed"),
+                    "duplex": details.get("duplex"),
+                    "link_detected": details.get("link_detected", False)
+                })
+            except Exception as e:
+                logger.error(f"Error processing ethernet interface {name}: {str(e)}")
+                iface_list.append({
+                    "name": name,
+                    "type": "ethernet",
+                    "status": f"ERROR: {str(e)}"
+                })
+        
+        logger.info(f"Returning ethernet interface list: {iface_list}")
+        return iface_list
+    except Exception as e:
+        logger.error(f"Error in get_ethernet_interfaces_endpoint: {str(e)}")
+        return {"error": str(e)}
+
+
+@app.get("/interfaces/all", summary="Get All Interfaces",
+         description="Retrieve both wireless and ethernet interfaces on the device with their status.")
+def get_all_interfaces_endpoint():
+    logger.info("Retrieving all interfaces (wifi and ethernet)")
+    try:
+        # Get WiFi interfaces
+        wifi_interfaces = []
+        wifi_names = get_interfaces()
+        for name in wifi_names:
+            try:
+                iface = get_interface(name)
+                if iface:
+                    status = get_interface_status(iface)
+                    wifi_interfaces.append({
+                        "name": name,
+                        "type": "wifi",
+                        "status": status
+                    })
+                    iface.disconnect()
+            except Exception as e:
+                wifi_interfaces.append({
+                    "name": name,
+                    "type": "wifi",
+                    "status": f"ERROR: {str(e)}"
+                })
+        
+        # Get Ethernet interfaces
+        ethernet_interfaces = []
+        ethernet_names = get_ethernet_interfaces()
+        for name in ethernet_names:
+            try:
+                details = get_ethernet_details(name)
+                ethernet_interfaces.append({
+                    "name": name,
+                    "type": "ethernet",
+                    "status": details.get("status", "Unknown"),
+                    "link_detected": details.get("link_detected", False)
+                })
+            except Exception as e:
+                ethernet_interfaces.append({
+                    "name": name,
+                    "type": "ethernet",
+                    "status": f"ERROR: {str(e)}"
+                })
+        
+        return {
+            "wifi": wifi_interfaces,
+            "ethernet": ethernet_interfaces
+        }
+    except Exception as e:
+        logger.error(f"Error in get_all_interfaces_endpoint: {str(e)}")
+        return {"error": str(e)}
+
+
 @app.get("/interface", summary="Get Interface Details", 
-         description="Retrieve pure interface details like IP address, MAC address, and connection status.")
+         description="Retrieve interface details for both WiFi and ethernet interfaces.")
 def get_interface_endpoint(
         interface_name: str = Query(..., description="Name of the interface to retrieve information for")):
     logger.info(f"Getting interface details for: {interface_name}")
+    
+    # First check if it's an ethernet interface
+    ethernet_interfaces = get_ethernet_interfaces()
+    if interface_name in ethernet_interfaces:
+        try:
+            details = get_ethernet_details(interface_name)
+            interface_data = {
+                "name": details.get("name", interface_name),
+                "type": "ethernet",
+                "status": details.get("status", "Unknown"),
+                "ip_address": details.get("ip_address"),
+                "mac_address": details.get("mac_address"),
+                "speed": details.get("speed"),
+                "duplex": details.get("duplex"),
+                "link_detected": details.get("link_detected", False)
+            }
+            return interface_data
+        except Exception as e:
+            logger.error(f"Error getting ethernet interface details: {e}")
+            return {"error": f"Failed to get ethernet interface details: {str(e)}"}
+    
+    # If not ethernet, try WiFi interface
     iface = get_interface(interface_name)
     if iface:
         try:
@@ -114,6 +233,7 @@ def get_interface_endpoint(
             # Return only interface-specific data
             interface_data = {
                 "name": full_details.get("name", interface_name),
+                "type": "wifi",
                 "status": full_details.get("status", "Unknown"),
                 "ip_address": full_details.get("ip_address"),
                 "mac_address": full_details.get("mac_address")
@@ -121,8 +241,8 @@ def get_interface_endpoint(
             
             return interface_data
         except Exception as e:
-            logger.error(f"Error getting interface details: {e}")
-            return {"error": f"Failed to get interface details: {str(e)}"}
+            logger.error(f"Error getting wifi interface details: {e}")
+            return {"error": f"Failed to get wifi interface details: {str(e)}"}
     else:
         return {"error": f"Interface {interface_name} not found"}
 
