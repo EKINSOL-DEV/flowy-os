@@ -1,0 +1,15 @@
+[Plymouth Theme]
+Name=Flowy2
+Description=Flowy V2 splash screen
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/flowy2/gfx
+ScriptFile=/usr/share/plymouth/themes/flowy2/flowy2.script
+
+[boot-up]
+ScriptFile=/usr/share/plymouth/themes/flowy2/flowy2.script
+[shutdown]
+ScriptFile=/usr/share/plymouth/themes/flowy2/flowy2.script
+[reboot]
+ScriptFile=/usr/share/plymouth/themes/flowy2/flowy2.script

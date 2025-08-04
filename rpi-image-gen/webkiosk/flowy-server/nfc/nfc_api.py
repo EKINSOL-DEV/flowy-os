@@ -316,15 +316,28 @@ async def stop_discovery():
 
 if __name__ == "__main__":
     import argparse
+    import os
     
     parser = argparse.ArgumentParser(description="NFC API Server")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
     parser.add_argument("--port", type=int, default=10001, help="Port to bind to")
     parser.add_argument("--reload", action="store_true", help="Enable auto-reload for development")
+    parser.add_argument("--i2c-bus", default="/dev/i2c-1", help="I2C bus device (default: /dev/i2c-1)")
+    parser.add_argument("--gpio-int", type=int, default=23, help="GPIO pin for NFC interrupt (default: 23)")
+    parser.add_argument("--gpio-enable", type=int, default=24, help="GPIO pin for NFC enable (default: 24)")
+    parser.add_argument("--gpio-fwdnld", type=int, default=25, help="GPIO pin for NFC firmware download (default: 25)")
     
     args = parser.parse_args()
     
+    # Set NFC configuration environment variables before importing NFC modules
+    os.environ['NFC_I2C_BUS'] = args.i2c_bus
+    os.environ['NFC_PIN_INT'] = str(args.gpio_int)
+    os.environ['NFC_PIN_ENABLE'] = str(args.gpio_enable)
+    os.environ['NFC_PIN_FWDNLD'] = str(args.gpio_fwdnld)
+    
     print(f"Starting NFC API Server on {args.host}:{args.port}")
+    print(f"Using I2C bus: {args.i2c_bus}")
+    print(f"Using GPIO pins - INT: {args.gpio_int}, ENABLE: {args.gpio_enable}, FWDNLD: {args.gpio_fwdnld}")
     
     uvicorn.run(
         "nfc_api:app",

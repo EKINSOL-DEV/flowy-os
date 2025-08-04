@@ -3,7 +3,7 @@
 # pkgs we need for our kiosk and hardware support
 chroot $1 apt install -y cage chromium python-is-python3 python3-pip python3.11-venv triggerhappy build-essential python3-dev plymouth plymouth-themes wlr-randr \
     raspi-config device-tree-compiler spi-tools i2c-tools python3-spidev python3-smbus \
-    libgpiod-dev libgpiod2 python3-libgpiod
+    libgpiod-dev libgpiod2 python3-libgpiod gpiod
 
 # Create flowy directory
 mkdir -p $1/flowy
@@ -24,7 +24,7 @@ chroot $1 $PYTHON_DIR/pip install -r $SERVER_DIR/pyreqs.txt
 KIOSK_APP="/usr/bin/chromium-browser http://localhost:8080/ --kiosk --noerrdialogs --disable-infobars --no-first-run --ozone-platform=wayland --enable-features=OverlayScrollbar --start-maximized --force-device-scale-factor=1.0 --disable-features=TranslateUI"
 
 SYS_DIR="$1/etc/systemd/system"
-for service in kiosk kioskserver wifiserver nfcserver; do
+for service in kiosk kioskserver wifiserver nfcserver nfc-init; do
    case $service in
       kiosk)
          sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
@@ -50,6 +50,9 @@ for service in kiosk kioskserver wifiserver nfcserver; do
              -e "s|<PYTHON_EXEC>|$PYTHON_DIR/python|g" \
             ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
             ;;
+      nfc-init)
+         cp ../services/$service.service.tpl $SYS_DIR/flowy-$service.service
+            ;;
       display-rotation)
          sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
             ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
@@ -71,20 +74,20 @@ cp ../flowy-protocol.desktop "$1/usr/share/applications/"
 # Configure Plymouth splash screen
 echo "Configuring Plymouth splash screen..."
 
-# Install baldi theme from archive
-if [ -n "$FLOWY_OUTPUT_DIR" ] && [ -f "$FLOWY_OUTPUT_DIR/themes/baldi.tar.xz" ]; then
-    echo "Installing baldi Plymouth theme..."
+# Install flowy theme from archive
+if [ -n "$FLOWY_OUTPUT_DIR" ] && [ -f "$FLOWY_OUTPUT_DIR/themes/flowy.tar.xz" ]; then
+    echo "Installing flowy Plymouth theme..."
     mkdir -p "$1/usr/share/plymouth/themes"
     cd "$1/usr/share/plymouth/themes"
-    tar -xf "$FLOWY_OUTPUT_DIR/themes/baldi.tar.xz"
+    tar -xf "$FLOWY_OUTPUT_DIR/themes/flowy.tar.xz"
     cd - > /dev/null
-    echo "✅ Baldi theme installed"
+    echo "✅ Flowy theme installed"
 else
-    echo "⚠️  Baldi theme archive not found, using default Plymouth theme"
+    echo "⚠️  Flowy theme archive not found, using default Plymouth theme"
 fi
 
-# Set default theme to baldi
-chroot $1 plymouth-set-default-theme baldi
+# Set default theme to flowy
+chroot $1 plymouth-set-default-theme flowy
 
 # Configure kernel command line for silent boot with Plymouth
 CMDLINE_FILE="$1/boot/firmware/cmdline.txt"

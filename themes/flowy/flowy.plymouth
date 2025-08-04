@@ -1,0 +1,15 @@
+[Plymouth Theme]
+Name=Flowy
+Description=Flowy default splash screen
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/flowy/gfx
+ScriptFile=/usr/share/plymouth/themes/flowy/flowy.script
+
+[boot-up]
+ScriptFile=/usr/share/plymouth/themes/flowy/flowy.script
+[shutdown]
+ScriptFile=/usr/share/plymouth/themes/flowy/flowy.script
+[reboot]
+ScriptFile=/usr/share/plymouth/themes/flowy/flowy.script
