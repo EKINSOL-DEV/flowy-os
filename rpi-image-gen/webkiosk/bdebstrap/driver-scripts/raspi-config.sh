@@ -17,8 +17,8 @@ echo "Configuring Raspberry Pi hardware interfaces using raspi-config..."
 echo "Enabling SPI interface..."
 chroot "$CHROOT_DIR" raspi-config nonint do_spi 0
 
-echo "Enabling I2C interface..."  
-chroot "$CHROOT_DIR" raspi-config nonint do_i2c 0
+# echo "Enabling I2C interface..."  
+# chroot "$CHROOT_DIR" raspi-config nonint do_i2c 0
 
 echo "Enabling SSH..."
 chroot "$CHROOT_DIR" raspi-config nonint do_ssh 0

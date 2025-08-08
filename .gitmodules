@@ -2,3 +2,11 @@
 	path = dependencies/linux_libnfc-nci
 	url = https://github.com/EKINSOL-DEV/linux_libnfc-nci.git
 	branch = 64bit_rpi_fixes
+[submodule "dependencies/stsw_rfal_lib"]
+	path = dependencies/stsw_rfal_lib
+	url = https://github.com/EKINSOL-DEV/stsw_rfal_lib.git
+	branch = main
+[submodule "dependencies/libpio"]
+	path = dependencies/libpio
+	url = https://github.com/EKINSOL-DEV/libpio.git
+	branch = main

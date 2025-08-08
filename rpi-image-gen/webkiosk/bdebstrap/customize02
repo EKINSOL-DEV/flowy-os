@@ -12,7 +12,7 @@ bash ./driver-scripts/audio.sh "$1"
 bash ./driver-scripts/display.sh "$1"
 bash ./driver-scripts/wifi.sh "$1"
 bash ./driver-scripts/raspi-config.sh "$1"
-bash ./driver-scripts/nfc.sh "$1"
+# bash ./driver-scripts/nfc.sh "$1"
 
 # Set up touch rotation to match display rotation (270 degrees)
 mkdir -p "$1/etc/udev/rules.d"
