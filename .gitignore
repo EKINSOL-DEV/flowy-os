@@ -3,6 +3,10 @@ output/**
 !output/**/
 !output/**/.gitkeep
 
+pico2w-nfc-bridge/arduino
+pico2w-nfc-bridge/python
+pico2w-nfc-bridge/debug
+
 rpi-image-gen/deploy/*
 rpi-image-gen/work/*
 rpi-image-gen/legacy/*
