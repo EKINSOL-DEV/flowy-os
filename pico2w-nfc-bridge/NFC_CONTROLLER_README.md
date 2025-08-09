@@ -34,7 +34,7 @@
 
 ## Arduino Bridge API
 
-The `nfc_bridge_new.ino` provides a serial interface for NFC operations.
+The `nfc_bridge_new.ino` provides a serial interface for NFC operations. Depends on ElectronicCats-PN7150.
 
 ### Commands
 

@@ -7,10 +7,10 @@
 #include "Electroniccats_PN7150.h"
 
 // Pin Configuration (matching the old script)
-#define PN7160_IRQ (15)
-#define PN7160_VEN (14)
+#define PN7160_IRQ (18)
+#define PN7160_VEN (19)
 #define PN7160_ADDR (0x28)
-#define PN7160_SDA (16)
+#define PN7160_SDA (16) 
 #define PN7160_SCL (17)
 
 // Create NFC device using the working library
@@ -572,7 +572,7 @@ void setup() {
     
     if (bridge->initialize()) {
         Serial.println("Ready for serial commands...");
-        Serial.println("Commands: PING, POLL, WRITE:<message>");
+        Serial.println("HELP for a list of commands");
         Serial.println("--------------------------------------------------");
     } else {
         Serial.println("FAILED to initialize NFC bridge!");
@@ -598,7 +598,19 @@ void loop() {
 void processCommand(String cmdline) {
     cmdline.toUpperCase();
     
-    if (cmdline == "PING") {
+    if (cmdline == "HELP") {
+        Serial.println("Commands:");
+        Serial.println("HELP");
+        Serial.println("- Returns this");
+        Serial.println("PING - Returns OK:PONG");
+        Serial.println("POLL | POLL:<amount of tags>");
+        Serial.println("- Returns OK:TAGNUMBER:PROTOCOL:TECH:ID:\"MESSAGE\" for every detected tag until either all tags have been found or 10 seconds have passed");
+        Serial.println("- Ends with POLLEND when polling ends, even after an ERROR");
+        Serial.println("WRITE:<message>");
+        Serial.println("- Writes a message to the tag");
+        
+    }
+    else if (cmdline == "PING") {
         Serial.println("OK:PONG");
     }
     else if (cmdline == "POLL" || cmdline.startsWith("POLL:")) {
