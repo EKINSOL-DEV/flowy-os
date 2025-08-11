@@ -1,4 +1,16 @@
-pywifi~=1.1.12
+# FastAPI
 fastapi~=0.115.12
 uvicorn
 typing
+pydantic
+# LEDs
+signalrcore==0.9.5
+requests==2.32.3
+urllib3==2.2.2
+spidev==3.6
+gpiozero==2.0.1
+lgpio
+adafruit-blinka
+# adafruit-circuitpython-pixelbuf
+git+https://github.com/adafruit/Adafruit_Blinka_Raspberry_Pi5_Neopixel.git#egg=Adafruit_Blinka_Raspberry_Pi5_Neopixel
+setuptools~=68.2.0

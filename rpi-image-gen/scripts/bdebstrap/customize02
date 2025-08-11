@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# Driver installation and hardware setup for image filesystem
+
+echo "Installing hardware drivers and firmware..."
+
+# Add user to netdev group for network management
+chroot "$1" usermod -a -G netdev "$IGconf_device_user1"
+
+# Call adapted driver scripts with chroot parameter
+bash ./driver-scripts/audio.sh "$1"
+bash ./driver-scripts/display.sh "$1"
+bash ./driver-scripts/wifi.sh "$1"
+bash ./driver-scripts/raspi-config.sh "$1"
+# bash ./driver-scripts/nfc.sh "$1"
+
+# Set up touch rotation to match display rotation (270 degrees)
+mkdir -p "$1/etc/udev/rules.d"
+cat > "$1/etc/udev/rules.d/99-waveshare-touch.rules" << 'EOF'
+# Touch rotation for 270 degree display rotation
+ENV{ID_INPUT_TOUCHSCREEN}=="1", ENV{LIBINPUT_CALIBRATION_MATRIX}="0 1 0 -1 0 1"
+EOF
+
+echo "Hardware drivers and display configuration completed."
+
+# Give kiosk user permissions to access wpa_supplicant control sockets
+chroot "$1" usermod -a -G netdev "$IGconf_device_user1"
+
+# Set up permissions for wpa_supplicant runtime directory and config
+mkdir -p "$1/etc/systemd/system/wpa_supplicant.service.d"
+cat > "$1/etc/systemd/system/wpa_supplicant.service.d/permissions.conf" << 'EOF'
+[Service]
+ExecStartPost=/bin/chgrp netdev /var/run/wpa_supplicant
+ExecStartPost=/bin/chmod g+rw /var/run/wpa_supplicant
+ExecStartPost=/bin/chgrp netdev /etc/dbus-1/system.d/wpa_supplicant.conf
+ExecStartPost=/bin/chmod g+r /etc/dbus-1/system.d/wpa_supplicant.conf
+EOF
+
+# Enable wpa_supplicant for python to use
+$BDEBSTRAP_HOOKS/enable-units "$1" wpa_supplicant
+
+# Set up polkit rule to allow netdev group to control NetworkManager
+mkdir -p "$1/etc/polkit-1/rules.d"
+cat > "$1/etc/polkit-1/rules.d/10-network-manager.rules" << 'EOF'
+polkit.addRule(function(action, subject) {
+    if (action.id.match("org.freedesktop.NetworkManager.*") &&
+        subject.isInGroup("netdev")) {
+        return polkit.Result.YES;
+    }
+});
+EOF

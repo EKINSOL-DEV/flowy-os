@@ -3,14 +3,21 @@ import logging
 from logging.handlers import RotatingFileHandler
 from fastapi import FastAPI, Query, Body
 from fastapi.middleware.cors import CORSMiddleware  # Optional: only needed if CORS is required
+from fastapi.staticfiles import StaticFiles
 from flowy_wifi_lib import (
     get_interfaces,
+    get_ethernet_interfaces,
+    get_all_interfaces,
     get_interface,
     get_interface_status,
+    get_interface_details,
+    get_ethernet_details,
     scan_wifi,
     get_all_networks,
     get_current_wifi,
-    connect_wifi
+    connect_wifi,
+    connect_wifi_networkmanager,
+    disconnect_wifi_networkmanager
 )
 
 PORT = 10_000
@@ -29,12 +36,23 @@ logger = logging.getLogger("wifi_api")
 logger.setLevel(logging.INFO)
 logger.addHandler(handler)
 
-# Initialize FastAPI app with metadata for automatic Swagger docs
+# Initialize FastAPI app with metadata for automatic Swagger docs and offline assets
 app = FastAPI(
     title="Flowy Wi-Fi API",
     description="API to manage and query Wi-Fi interfaces using flowy_wifi_lib",
-    version="1.0.0"
+    version="1.0.0",
+    swagger_ui_parameters={"deepLinking": False},
+    swagger_js_url="/static/swagger-ui-bundle.js",
+    swagger_css_url="/static/swagger-ui.css",
+    redoc_url=None  # Disable ReDoc to use only Swagger UI
 )
+
+# Create static directory for Swagger UI assets
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+os.makedirs(static_dir, exist_ok=True)
+
+# Mount static files
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Enable CORS for local network access
 app.add_middleware(
@@ -49,40 +67,201 @@ app.add_middleware(
          description="Retrieve all available wireless interfaces on the device with their status.")
 def get_interfaces_endpoint():
     logger.info("Retrieving all wireless interfaces")
-    interfaces = get_interfaces()
-    # Transform the interface objects into a JSON serializable format
-    iface_list = []
-    for iface in interfaces:
-        iface_list.append({
-            "name": iface.name(),
-            "status": get_interface_status(iface)
-        })
-    return iface_list
+    try:
+        interface_names = get_interfaces()
+        logger.info(f"Found interface names: {interface_names}")
+        
+        # Transform the interface names into a JSON serializable format with status
+        iface_list = []
+        for name in interface_names:
+            logger.info(f"Processing interface: {name}")
+            try:
+                iface = get_interface(name)
+                if iface:
+                    logger.info(f"Getting status for interface: {name}")
+                    status = get_interface_status(iface)
+                    logger.info(f"Status for {name}: {status}")
+                    iface_list.append({
+                        "name": name,
+                        "status": status
+                    })
+                    iface.disconnect()  # Ensure connection is closed
+                else:
+                    logger.warning(f"Could not get interface object for: {name}")
+            except Exception as e:
+                logger.error(f"Error processing interface {name}: {str(e)}")
+                iface_list.append({
+                    "name": name,
+                    "status": f"ERROR: {str(e)}"
+                })
+        
+        logger.info(f"Returning interface list: {iface_list}")
+        return iface_list
+    except Exception as e:
+        logger.error(f"Error in get_interfaces_endpoint: {str(e)}")
+        return {"error": str(e)}
 
 
-@app.get("/interface", summary="Get Interface Details", description="Retrieve details of a network interface by name.")
+@app.get("/interfaces/ethernet", summary="Get Ethernet Interfaces",
+         description="Retrieve all available ethernet interfaces on the device with their status.")
+def get_ethernet_interfaces_endpoint():
+    logger.info("Retrieving all ethernet interfaces")
+    try:
+        interface_names = get_ethernet_interfaces()
+        logger.info(f"Found ethernet interface names: {interface_names}")
+        
+        # Transform the interface names into a JSON serializable format with status
+        iface_list = []
+        for name in interface_names:
+            logger.info(f"Processing ethernet interface: {name}")
+            try:
+                details = get_ethernet_details(name)
+                logger.info(f"Details for {name}: {details}")
+                iface_list.append({
+                    "name": name,
+                    "type": "ethernet",
+                    "status": details.get("status", "Unknown"),
+                    "ip_address": details.get("ip_address"),
+                    "mac_address": details.get("mac_address"),
+                    "speed": details.get("speed"),
+                    "duplex": details.get("duplex"),
+                    "link_detected": details.get("link_detected", False)
+                })
+            except Exception as e:
+                logger.error(f"Error processing ethernet interface {name}: {str(e)}")
+                iface_list.append({
+                    "name": name,
+                    "type": "ethernet",
+                    "status": f"ERROR: {str(e)}"
+                })
+        
+        logger.info(f"Returning ethernet interface list: {iface_list}")
+        return iface_list
+    except Exception as e:
+        logger.error(f"Error in get_ethernet_interfaces_endpoint: {str(e)}")
+        return {"error": str(e)}
+
+
+@app.get("/interfaces/all", summary="Get All Interfaces",
+         description="Retrieve both wireless and ethernet interfaces on the device with their status.")
+def get_all_interfaces_endpoint():
+    logger.info("Retrieving all interfaces (wifi and ethernet)")
+    try:
+        # Get WiFi interfaces
+        wifi_interfaces = []
+        wifi_names = get_interfaces()
+        for name in wifi_names:
+            try:
+                iface = get_interface(name)
+                if iface:
+                    status = get_interface_status(iface)
+                    wifi_interfaces.append({
+                        "name": name,
+                        "type": "wifi",
+                        "status": status
+                    })
+                    iface.disconnect()
+            except Exception as e:
+                wifi_interfaces.append({
+                    "name": name,
+                    "type": "wifi",
+                    "status": f"ERROR: {str(e)}"
+                })
+        
+        # Get Ethernet interfaces
+        ethernet_interfaces = []
+        ethernet_names = get_ethernet_interfaces()
+        for name in ethernet_names:
+            try:
+                details = get_ethernet_details(name)
+                ethernet_interfaces.append({
+                    "name": name,
+                    "type": "ethernet",
+                    "status": details.get("status", "Unknown"),
+                    "link_detected": details.get("link_detected", False)
+                })
+            except Exception as e:
+                ethernet_interfaces.append({
+                    "name": name,
+                    "type": "ethernet",
+                    "status": f"ERROR: {str(e)}"
+                })
+        
+        return {
+            "wifi": wifi_interfaces,
+            "ethernet": ethernet_interfaces
+        }
+    except Exception as e:
+        logger.error(f"Error in get_all_interfaces_endpoint: {str(e)}")
+        return {"error": str(e)}
+
+
+@app.get("/interface", summary="Get Interface Details", 
+         description="Retrieve interface details for both WiFi and ethernet interfaces.")
 def get_interface_endpoint(
         interface_name: str = Query(..., description="Name of the interface to retrieve information for")):
     logger.info(f"Getting interface details for: {interface_name}")
-    iface_details = get_interface(interface_name)
-    return iface_details
-
-
-@app.get("/interface_status", summary="Get Interface Status",
-         description="Get the status of a network interface by name.")
-def get_interface_status_endpoint(
-        interface_name: str = Query(..., description="Name of the interface to check status for")):
-    logger.info(f"Getting interface status for: {interface_name}")
+    
+    # First check if it's an ethernet interface
+    ethernet_interfaces = get_ethernet_interfaces()
+    if interface_name in ethernet_interfaces:
+        try:
+            details = get_ethernet_details(interface_name)
+            interface_data = {
+                "name": details.get("name", interface_name),
+                "type": "ethernet",
+                "status": details.get("status", "Unknown"),
+                "ip_address": details.get("ip_address"),
+                "mac_address": details.get("mac_address"),
+                "speed": details.get("speed"),
+                "duplex": details.get("duplex"),
+                "link_detected": details.get("link_detected", False)
+            }
+            return interface_data
+        except Exception as e:
+            logger.error(f"Error getting ethernet interface details: {e}")
+            return {"error": f"Failed to get ethernet interface details: {str(e)}"}
+    
+    # If not ethernet, try WiFi interface
     iface = get_interface(interface_name)
-    status = get_interface_status(iface)
-    return {"interface": iface.name(), "status": status}
+    if iface:
+        try:
+            # Get full details but filter to interface-only data
+            full_details = get_interface_details(iface)
+            iface.disconnect()
+            
+            # Return only interface-specific data
+            interface_data = {
+                "name": full_details.get("name", interface_name),
+                "type": "wifi",
+                "status": full_details.get("status", "Unknown"),
+                "ip_address": full_details.get("ip_address"),
+                "mac_address": full_details.get("mac_address")
+            }
+            
+            return interface_data
+        except Exception as e:
+            logger.error(f"Error getting wifi interface details: {e}")
+            return {"error": f"Failed to get wifi interface details: {str(e)}"}
+    else:
+        return {"error": f"Interface {interface_name} not found"}
 
 
-@app.get("/scan_wifi", summary="Scan Wi-Fi Networks",
+# New Network-focused endpoints
+@app.get("/network/scan", summary="Scan Wi-Fi Networks",
          description="Scan for available Wi-Fi networks on a given interface and return a deduplicated list.")
-def scan_wifi_endpoint(
+def network_scan_endpoint(
         interface_name: str = Query(..., description="Name of the interface to perform the Wi-Fi scan on")):
     logger.info(f"Scanning Wi-Fi networks on interface: {interface_name}")
+    networks = scan_wifi(interface_name)
+    return networks
+
+# Legacy endpoint for backward compatibility
+@app.get("/scan_wifi", deprecated=True, summary="[DEPRECATED] Scan Wi-Fi Networks",
+         description="[DEPRECATED] Use /network/scan instead. Scan for available Wi-Fi networks on a given interface.")
+def scan_wifi_endpoint(
+        interface_name: str = Query(..., description="Name of the interface to perform the Wi-Fi scan on")):
+    logger.info(f"[DEPRECATED] Scanning Wi-Fi networks on interface: {interface_name}")
     networks = scan_wifi(interface_name)
     return networks
 
@@ -96,29 +275,122 @@ def get_all_networks_endpoint(
     return networks
 
 
-@app.get("/current_wifi", summary="Get Current Wi-Fi",
-         description="Get information about the currently connected Wi-Fi network.")
+@app.get("/network/current", summary="Get Current Network",
+         description="Get detailed information about the currently connected Wi-Fi network.")
+def network_current_endpoint(
+        interface_name: str = Query("wlan0", description="Name of the interface to check for current network")):
+    logger.info(f"Getting current network details for interface: {interface_name}")
+    
+    # Get basic current wifi info
+    current = get_current_wifi()
+    if not current or not current.get('ssid'):
+        return {"connected": False, "ssid": None}
+    
+    # Enrich with interface details if connected
+    try:
+        iface = get_interface(interface_name)
+        if iface:
+            full_details = get_interface_details(iface)
+            iface.disconnect()
+            
+            # Return network-specific data
+            if full_details.get("ssid") == current.get("ssid"):
+                network_data = {
+                    "connected": True,
+                    "ssid": full_details.get("ssid"),
+                    "bssid": full_details.get("bssid"),
+                    "frequency": full_details.get("frequency"),
+                    "signal_level": full_details.get("signal_level"),
+                    "security": "WPA/WPA2"  # Default assumption
+                }
+                return network_data
+    except Exception as e:
+        logger.error(f"Error getting network details: {e}")
+    
+    # Fallback to basic info
+    return {"connected": True, "ssid": current.get("ssid")}
+
+# Legacy endpoint for backward compatibility
+@app.get("/current_wifi", deprecated=True, summary="[DEPRECATED] Get Current Wi-Fi",
+         description="[DEPRECATED] Use /network/current instead. Get information about the currently connected Wi-Fi network.")
 def get_current_wifi_endpoint():
-    logger.info("Getting currently connected Wi-Fi")
+    logger.info("[DEPRECATED] Getting currently connected Wi-Fi")
     current = get_current_wifi()
     return current
 
 
-@app.post("/connect_wifi", summary="Connect to Wi-Fi",
+@app.post("/network/connect", summary="Connect to Network",
           description="Connect to a Wi-Fi network with the given SSID and password on a specified interface.")
-def connect_wifi_endpoint(
+def network_connect_endpoint(
         ssid: str = Body(..., description="SSID of the Wi-Fi network to connect to"),
         password: str = Body(..., description="Password for the Wi-Fi network"),
         interface_name: str = Body(..., description="Name of the interface to use for the connection")
 ):
     logger.info(f"Attempting to connect to Wi-Fi network {ssid} on interface {interface_name}")
-    result = connect_wifi(ssid, password, interface_name)
+    
+    # Use NetworkManager as primary method
+    result = connect_wifi_networkmanager(ssid, password, interface_name)
+    
+    if not result:
+        logger.info("NetworkManager connection failed, trying wpa_supplicant as fallback...")
+        result = connect_wifi(ssid, password, interface_name)
+    
+    logger.info(f"Connection result: {result}")
+    return {"connected": result}
+
+# Legacy endpoint for backward compatibility
+@app.post("/connect_wifi", deprecated=True, summary="[DEPRECATED] Connect to Wi-Fi",
+          description="[DEPRECATED] Use /network/connect instead. Connect to a Wi-Fi network with the given SSID and password.")
+def connect_wifi_endpoint(
+        ssid: str = Body(..., description="SSID of the Wi-Fi network to connect to"),
+        password: str = Body(..., description="Password for the Wi-Fi network"),
+        interface_name: str = Body(..., description="Name of the interface to use for the connection")
+):
+    logger.info(f"[DEPRECATED] Attempting to connect to Wi-Fi network {ssid} on interface {interface_name}")
+    
+    # Use NetworkManager as primary method
+    result = connect_wifi_networkmanager(ssid, password, interface_name)
+    
+    if not result:
+        logger.info("NetworkManager connection failed, trying wpa_supplicant as fallback...")
+        result = connect_wifi(ssid, password, interface_name)
+    
     logger.info(f"Connection result: {result}")
     return {"connected": result}
 
 
+@app.post("/network/disconnect", summary="Disconnect from Network",
+          description="Disconnect from the currently connected WiFi network on a specified interface.")
+def network_disconnect_endpoint(
+        interface_name: str = Body(..., description="Name of the interface to disconnect from the network")
+):
+    logger.info(f"Attempting to disconnect from WiFi network on interface {interface_name}")
+    
+    # Use NetworkManager as primary method
+    result = disconnect_wifi_networkmanager(interface_name)
+    
+    logger.info(f"Disconnection result: {result}")
+    return {"disconnected": result}
+
+# Legacy endpoint for backward compatibility
+@app.post("/disconnect_wifi", deprecated=True, summary="[DEPRECATED] Disconnect from WiFi",
+          description="[DEPRECATED] Use /network/disconnect instead. Disconnect from the currently connected WiFi network.")
+def disconnect_wifi_endpoint(
+        interface_name: str = Body(..., description="Name of the interface to disconnect from the network")
+):
+    logger.info(f"[DEPRECATED] Attempting to disconnect from WiFi network on interface {interface_name}")
+    
+    # Use NetworkManager as primary method
+    result = disconnect_wifi_networkmanager(interface_name)
+    
+    logger.info(f"Disconnection result: {result}")
+    return {"disconnected": result}
+
+
 if __name__ == "__main__":
     import uvicorn
+    import os
 
+    is_development = os.getenv("ENVIRONMENT", "production") == "development"
     logger.info(f"WiFi Server is listening to port {PORT}")
-    uvicorn.run(app, host="0.0.0.0", port=PORT, reload=True)
+    uvicorn.run(app, host="0.0.0.0", port=PORT, reload=is_development)

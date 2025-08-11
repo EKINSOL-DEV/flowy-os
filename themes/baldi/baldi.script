@@ -1,0 +1,69 @@
+// Baldi Plymouth Theme Script
+
+// Configuration
+spinner_size = 256;  // Size of the spinner (adjust as needed)
+frame_count = 48;   // Number of throbber frames
+
+title_startup_image = Image("title_startup.png");
+title_shutdown_image = Image("title_shutdown.png");
+
+// Get screen dimensions
+screen_width = Window.GetWidth();
+screen_height = Window.GetHeight();
+
+// Load spinner images from the spinner subfolder
+for (i = 0; i < frame_count; i++) {
+    // Format frame number as two digits (00, 01, 02, etc.)
+    frame_num = "";
+    if (i < 10)
+        frame_num = "0" + i;
+    else
+        frame_num = i;
+    
+    spinner_images[i] = Image("throbber-" + frame_num + ".png");
+    
+    // Scale to desired size if image loaded successfully
+    if (spinner_images[i])
+        spinner_images[i] = spinner_images[i].Scale(spinner_size, spinner_size);
+}
+
+// Create sprite and center it on screen
+spinner_sprite = Sprite();
+title_sprite = Sprite();
+
+spinner_sprite.SetX(screen_width / 2 - spinner_size / 2);
+spinner_sprite.SetY(screen_height / 2 - spinner_size / 2);
+
+if (Plymouth.GetMode() == "shutdown" || Plymouth.GetMode() == "reboot")
+{
+    selected_image = title_shutdown_image;
+}
+else
+{
+    selected_image = title_startup_image;
+}
+title_sprite.SetImage(selected_image);
+title_sprite.SetX(screen_width/2 - selected_image.GetWidth()/2);
+title_sprite.SetY(screen_height/4 - selected_image.GetHeight()/2);
+
+// Animation state
+current_frame = 0;
+
+// Refresh callback function - called up to 50 times per second
+fun refresh_callback() {
+    // Set current frame image
+    if (spinner_images[current_frame])
+        spinner_sprite.SetImage(spinner_images[current_frame]);
+    
+    // Advance to next frame
+    current_frame++;
+    if (current_frame >= frame_count)
+        current_frame = 0;
+}
+
+// Register the refresh callback
+Plymouth.SetRefreshFunction(refresh_callback);
+
+// Set window properties
+Window.SetBackgroundTopColor (1.0, 1.00, 1.0);
+Window.SetBackgroundBottomColor (1.0, 1.00, 1.0);

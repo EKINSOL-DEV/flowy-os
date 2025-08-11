@@ -1,5 +1,10 @@
-images/*
-!images/.gitkeep
+output/**
+!output/
+!output/**/
+!output/**/.gitkeep
+
+pico2w-nfc-bridge/*
+
 rpi-image-gen/deploy/*
 rpi-image-gen/work/*
 rpi-image-gen/legacy/*
@@ -7,4 +12,3 @@ rpi-image-gen/postrun.sh
 rpi-image-gen/SKIP
 rpi-image-gen/SKIP_IMAGES
 .pc
-*-pc

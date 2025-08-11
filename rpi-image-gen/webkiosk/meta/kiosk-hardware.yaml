@@ -1,0 +1,13 @@
+---
+name: kiosk-hardware
+mmdebstrap:
+  packages:
+    - device-tree-compiler
+    - spi-tools
+    - i2c-tools
+    - python3-spidev
+    - python3-smbus
+    - libgpiod-dev
+    - libgpiod2
+    - python3-libgpiod
+    - gpiod

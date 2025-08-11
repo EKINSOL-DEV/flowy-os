@@ -1,0 +1,129 @@
+// Flowy Plymouth Theme Script (with a slight hint of baldi)
+
+// Background pattern images
+primary_image = Image("flowy_primary.png");
+secondary_image = Image("flowy_secondary.png");
+
+// Configuration
+gap_x = 256;  // Horizontal gap
+gap_y = 224;  // Vertical gap (adjust if different)
+
+// Math functions
+fun ceil(value) {
+    if (value == Math.Int(value))
+        return value;
+    else
+        return Math.Int(value) + 1;
+}
+
+fun sine_wave(x) {
+    return 30 * Math.Sin((1/50) * x) - 25;
+}
+
+// Get screen dimensions
+screen_width = Window.GetWidth();
+screen_height = Window.GetHeight();
+
+// Getting the required amount of tiles
+tile_width = primary_image.GetWidth() + gap_x;
+tile_height = primary_image.GetHeight() + gap_y;
+
+// Calculate proper grid size with buffer for movement
+needed_x = ceil(screen_width / tile_width) + 2;
+needed_y = ceil(screen_height / tile_height) + 2;
+
+// Start positioning from negative coordinates to allow smooth wrapping
+start_x = -tile_width;
+start_y = -tile_height;
+
+tile_index = 0;
+
+for (i = 0; i < needed_x; i++) {
+    for (j = 0; j < needed_y; j++) {
+        tiles[tile_index] = Sprite();
+        
+        /*if (i % 2 == j % 2)
+            tiles[tile_index].SetImage(primary_image);
+        else
+            tiles[tile_index].SetImage(secondary_image);
+        */
+        tiles[tile_index].SetImage(Image.Text(tile_index));
+        x_pos = start_x + (i * tile_width);
+        y_pos = start_y + (j * tile_height);
+
+        if (j % 2 == 1)
+            x_pos += tile_width / 2;
+
+        tiles[tile_index].SetX(x_pos);
+        tiles[tile_index].SetY(y_pos);
+
+        tile_index++;
+    }
+}
+
+for (i = 0; i < needed_x; i++) {
+      for (j = 0; j < needed_y; j++) {
+          tiles[tile_index] = Sprite();
+
+          // Debug text showing tile_index, column i, row j
+          debug_text = tile_index + " (" + i + "," + j + ")";
+          tiles[tile_index].SetImage(Image.Text(debug_text));
+
+          x_pos = start_x + (i * tile_width);
+          y_pos = start_y + (j * tile_height);
+
+          if (j % 2 == 1)
+              x_pos += tile_width / 2;
+
+          tiles[tile_index].SetX(x_pos);
+          tiles[tile_index].SetY(y_pos);
+
+          tile_index++;
+      }
+  }
+
+x_speed = 1;
+y_speed = 3;
+
+if (Math.Random() > 0.5)
+    x_speed *= -1;
+if (Math.Random() > 0.5)
+    y_speed *= -1;
+
+fun pos_x(target_x) {
+    if (target_x >= screen_width)
+        return target_x - (needed_x * tile_width);
+    else if (target_x <= -tile_width)
+        return target_x + (needed_x * tile_width);
+    else
+        return target_x;
+}
+
+fun pos_y(target_y) {
+    if (target_y >= screen_height)
+        return target_y - (needed_y * tile_height);
+    else if (target_y <= -tile_height)
+        return target_y + (needed_y * tile_height);
+    else
+        return target_y;
+}
+
+// Refresh callback function - called up to 50 times per second
+current_frame = 0;
+fun refresh_callback() {
+    for (sprite_index = 0; sprite_index < tile_index; sprite_index++) {
+        tiles[sprite_index].SetX(pos_x(tiles[sprite_index].GetX() + x_speed));
+        tiles[sprite_index].SetY(pos_y(tiles[sprite_index].GetY() + y_speed));
+    }
+
+    current_frame++;
+    if (current_frame >= 50)
+        current_frame = 0;
+}
+
+// Register the refresh callback
+Plymouth.SetRefreshFunction(refresh_callback);
+
+// Set window properties
+Window.SetBackgroundTopColor(1.0, 1.00, 1.0);
+Window.SetBackgroundBottomColor(1.0, 1.00, 1.0);
