@@ -36,6 +36,15 @@
 
 The `nfc_bridge_new.ino` provides a serial interface for NFC operations. Depends on ElectronicCats-PN7150.
 
+### Test Commands - MacOS
+1. Install homebrew
+2. Run `brew install minicom`
+3. Find the USB device (must be flashed first)
+4. Run this command (replace XXXX with the number after `usbmodem`)
+```
+minicom -D /dev/tty.usbmodemXXXX -b 115200
+```
+
 ### Commands
 
 #### PING

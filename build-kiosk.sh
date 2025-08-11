@@ -61,6 +61,6 @@ fi
 sudo rm -rf rpi-image-gen/work && \
 mkdir -p "$FLOWY_OUTPUT_DIR/images" && \
 [ -f "$FLOWY_OUTPUT_DIR/images/latest.img" ] && mv "$FLOWY_OUTPUT_DIR/images/latest.img" "$FLOWY_OUTPUT_DIR/images/prev.img" || true && \
-(cd rpi-image-gen && ./build.sh -c generic64-apt-simple -D ./webkiosk -o ./webkiosk/image.options) && \
+(cd rpi-image-gen && ./build.sh -c webkiosk/config/flowy-kiosk.cfg -D ./webkiosk -o ./webkiosk/image.options) && \
 mv rpi-image-gen/work/*/deploy/*.img "$FLOWY_OUTPUT_DIR/images/latest.img" && \
 echo "✅ Build completed! Image: $FLOWY_OUTPUT_DIR/images/latest.img"

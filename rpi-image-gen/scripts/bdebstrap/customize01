@@ -10,8 +10,8 @@ chroot $1 chown -R $IGconf_device_user1:$IGconf_device_user1 /flowy
 SERVER_DIR="/flowy/server"
 
 # Copy our server and python requirements list
-cp -r ./flowy-server "$1$SERVER_DIR"
-cp ./pyreqs.txt "$1$SERVER_DIR/pyreqs.txt"
+cp -r ../flowy-server "$1$SERVER_DIR"
+cp ../pyreqs.txt "$1$SERVER_DIR/pyreqs.txt"
 
 chroot $1 /usr/bin/python -m venv $SERVER_DIR/.venv
 PYTHON_DIR=$SERVER_DIR/.venv/bin
@@ -28,29 +28,29 @@ for service in kiosk kioskserver wifiserver ledserver nfcserver nfc-init; do
          sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
              -e "s|<KIOSK_RUNDIR>|\/home\/$IGconf_device_user1|g" \
              -e "s|<KIOSK_APP>|$KIOSK_APP|g" \
-            ./services/$service.service.tpl > $SYS_DIR/flowy-$service.service
+            ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
             ;;
       kioskserver)
          sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
              -e "s|<SERVER_DIR>|$SERVER_DIR/wifi-web|g" \
              -e "s|<PYTHON_EXEC>|$PYTHON_DIR/python|g" \
-            ./services/$service.service.tpl > $SYS_DIR/flowy-$service.service
+            ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
             ;;
       wifiserver)
          sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
              -e "s|<SERVER_DIR>|$SERVER_DIR/wifi|g" \
              -e "s|<PYTHON_EXEC>|$PYTHON_DIR/python|g" \
-            ./services/$service.service.tpl > $SYS_DIR/flowy-$service.service
+            ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
             ;;
       ledserver)
          sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
              -e "s|<SERVER_DIR>|$SERVER_DIR/led|g" \
              -e "s|<PYTHON_EXEC>|$PYTHON_DIR/python|g" \
-            ./services/$service.service.tpl > $SYS_DIR/flowy-$service.service
+            ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
             ;;
       display-rotation)
          sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
-            ./services/$service.service.tpl > $SYS_DIR/flowy-$service.service
+            ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
             ;;
    esac
 
@@ -68,12 +68,12 @@ done
       #      ;;
 
 # Install flowy protocol handler
-cp ./flowy-protocol-handler.sh "$1/usr/local/bin/flowy-protocol-handler.sh"
+cp ../flowy-protocol-handler.sh "$1/usr/local/bin/flowy-protocol-handler.sh"
 chmod +x "$1/usr/local/bin/flowy-protocol-handler.sh"
 
 # Install protocol handler desktop file system-wide
 mkdir -p "$1/usr/share/applications"
-cp ./flowy-protocol.desktop "$1/usr/share/applications/"
+cp ../flowy-protocol.desktop "$1/usr/share/applications/"
 
 # Configure Plymouth splash screen
 echo "Configuring Plymouth splash screen..."

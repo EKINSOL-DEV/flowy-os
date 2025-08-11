@@ -9,27 +9,72 @@ import sys
 import os
 import asyncio
 import time
-from typing import Optional, Dict, Any, List
+import json
+from typing import Optional, Dict, Any, List, Set
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 import uvicorn
 
-# nfc_reader should be installed system-wide by nfc.sh
-# No need to modify sys.path
+# Import NFC modules - either hardware I2C/SPI driver or USB Pico bridge
+use_pico_bridge = "--usb" in sys.argv or "--usb-device" in sys.argv
 
-try:
-    import nfc_reader
-    from nfc_reader import NFCReader, NFCError, NFCInitializationError
-except ImportError as e:
-    print(f"Error importing nfc_reader: {e}")
-    print("Make sure nfc_reader.py and nfc_native.so are available in /home/builder/flowy-os/output/")
-    sys.exit(1)
+if use_pico_bridge:
+    try:
+        from pico_nfc_bridge import NFCReader, NFCError, NFCInitializationError
+        print("Using Pi Pico NFC Bridge (USB/Serial)")
+    except ImportError as e:
+        print(f"Error importing pico_nfc_bridge: {e}")
+        sys.exit(1)
+else:
+    try:
+        import nfc_reader
+        from nfc_reader import NFCReader, NFCError, NFCInitializationError
+        print("Using hardware NFC driver (I2C/SPI)")
+    except ImportError as e:
+        print(f"Error importing nfc_reader: {e}")
+        print("Make sure nfc_reader.py and nfc_native.so are available in /home/builder/flowy-os/output/")
+        sys.exit(1)
 
 # Global NFC reader instance
 nfc_reader_instance: Optional[NFCReader] = None
+
+# WebSocket connection manager
+class WebSocketManager:
+    def __init__(self):
+        self.active_connections: Set[WebSocket] = set()
+    
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.add(websocket)
+    
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.discard(websocket)
+    
+    async def broadcast(self, message: dict):
+        if not self.active_connections:
+            return
+            
+        # Create list of connections to remove if they fail
+        failed_connections = []
+        
+        for connection in self.active_connections:
+            try:
+                await connection.send_json(message)
+            except:
+                failed_connections.append(connection)
+        
+        # Remove failed connections
+        for connection in failed_connections:
+            self.active_connections.discard(connection)
+
+websocket_manager = WebSocketManager()
+
+# Polling state management
+polling_active = False
+polling_task = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,7 +83,17 @@ async def lifespan(app: FastAPI):
     
     # Startup
     try:
-        nfc_reader_instance = NFCReader(auto_cleanup=True)
+        if use_pico_bridge:
+            # For Pico bridge, pass USB device path if specified
+            usb_device = None
+            for i, arg in enumerate(sys.argv):
+                if arg == "--usb-device" and i + 1 < len(sys.argv):
+                    usb_device = sys.argv[i + 1]
+                    break
+            nfc_reader_instance = NFCReader(device_path=usb_device, auto_cleanup=True)
+        else:
+            nfc_reader_instance = NFCReader(auto_cleanup=True)
+        
         nfc_reader_instance.initialize()
         print("NFC reader initialized successfully")
     except NFCInitializationError as e:
@@ -60,154 +115,271 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Pydantic models for request/response
-class NFCReadRequest(BaseModel):
-    timeout: float = Field(default=10.0, ge=0.1, le=300.0, description="Timeout in seconds")
-
+# Pydantic models for simplified API
 class NFCWriteRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=1000, description="Text to write to NFC tag")
-    language_code: str = Field(default="en", description="Language code")
-    timeout: float = Field(default=10.0, ge=0.1, le=300.0, description="Timeout in seconds")
-
-class NFCMultiReadRequest(BaseModel):
-    min_tags: int = Field(default=2, ge=1, le=10, description="Minimum number of tags to read")
-    timeout: float = Field(default=30.0, ge=0.1, le=300.0, description="Timeout in seconds")
-
-class NFCTagResponse(BaseModel):
-    text: Optional[str] = None
-    language: Optional[str] = None
-    uid: Optional[str] = None
-    technology_name: Optional[str] = None
-
-class NFCReadResponse(BaseModel):
-    success: bool
-    data: Optional[NFCTagResponse] = None
-    message: str
-
-class NFCMultiReadResponse(BaseModel):
-    success: bool
-    data: Optional[List[NFCTagResponse]] = None
-    count: int = 0
-    message: str
 
 class NFCWriteResponse(BaseModel):
     success: bool
     message: str
 
-class NFCStatusResponse(BaseModel):
+class NFCEnableDisableResponse(BaseModel):
+    success: bool
+    message: str
+
+class NFCPingResponse(BaseModel):
+    success: bool
+    message: str
     initialized: bool
-    discovery_active: bool
-    tag_present: bool
-    num_tags: int
 
 # Utility function to check NFC availability
 def check_nfc_available():
     if nfc_reader_instance is None:
         raise HTTPException(status_code=503, detail="NFC reader not initialized")
 
-@app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy", "nfc_available": nfc_reader_instance is not None}
-
-@app.get("/status", response_model=NFCStatusResponse)
-async def get_status():
-    """Get current NFC reader status"""
-    check_nfc_available()
+# Polling functionality for streaming NFC events
+async def start_nfc_polling():
+    """Start continuous NFC polling and stream events to WebSocket clients"""
+    global polling_active
     
-    return NFCStatusResponse(
-        initialized=nfc_reader_instance._initialized,
-        discovery_active=nfc_reader_instance.discovery_active,
-        tag_present=nfc_reader_instance.is_tag_present(),
-        num_tags=nfc_reader_instance.get_num_tags()
+    if not nfc_reader_instance:
+        return
+    
+    polling_active = True
+    
+    try:
+        # For Pico bridge, we can start the POLL command and parse the serial output
+        if use_pico_bridge:
+            await poll_pico_bridge()
+        else:
+            # For hardware driver, implement basic polling
+            await poll_hardware_driver()
+    except Exception as e:
+        print(f"Error in NFC polling: {e}")
+        await websocket_manager.broadcast({
+            "type": "error",
+            "message": f"Polling error: {str(e)}"
+        })
+    finally:
+        polling_active = False
+
+async def poll_pico_bridge():
+    """Poll using Pico bridge serial commands"""
+    global polling_active
+    
+    try:
+        # Send POLL command to start continuous polling
+        if hasattr(nfc_reader_instance, 'device') and nfc_reader_instance.device:
+            nfc_reader_instance.device.write("POLL\n".encode())
+            
+            while polling_active:
+                # Read lines from serial and parse NFC events
+                if nfc_reader_instance.device.in_waiting > 0:
+                    try:
+                        line = nfc_reader_instance.device.readline().decode().strip()
+                        if line:
+                            await parse_nfc_event(line)
+                    except Exception as e:
+                        print(f"Error reading serial line: {e}")
+                
+                await asyncio.sleep(0.1)
+                
+    except Exception as e:
+        print(f"Error in Pico bridge polling: {e}")
+    finally:
+        # Send ENDPOLL to stop polling
+        try:
+            if hasattr(nfc_reader_instance, 'device') and nfc_reader_instance.device:
+                nfc_reader_instance.device.write("ENDPOLL\n".encode())
+        except:
+            pass
+
+async def poll_hardware_driver():
+    """Poll using hardware driver (basic implementation)"""
+    global polling_active
+    
+    while polling_active:
+        try:
+            # Basic tag detection using hardware driver
+            if nfc_reader_instance.is_tag_present():
+                tag_info = nfc_reader_instance.get_tag_info()
+                if tag_info:
+                    await websocket_manager.broadcast({
+                        "type": "enter",
+                        "data": {
+                            "uid": tag_info.get("uid"),
+                            "technology": tag_info.get("technology_name"),
+                            "text": tag_info.get("text", "")
+                        }
+                    })
+                    
+                    # Wait for tag removal
+                    while nfc_reader_instance.is_tag_present() and polling_active:
+                        await asyncio.sleep(0.5)
+                    
+                    await websocket_manager.broadcast({
+                        "type": "leave",
+                        "data": {
+                            "uid": tag_info.get("uid")
+                        }
+                    })
+            
+            await asyncio.sleep(0.5)
+        except Exception as e:
+            print(f"Error in hardware driver polling: {e}")
+            await asyncio.sleep(1)
+
+async def parse_nfc_event(line: str):
+    """Parse NFC events from Pico bridge serial output"""
+    try:
+        if line.startswith("OK:ENTER:"):
+            # Parse: OK:ENTER:PROTOCOL:TECH:ID:"MESSAGE"
+            parts = line.split(":", 5)
+            if len(parts) >= 6:
+                protocol = parts[2]
+                tech = parts[3]
+                tag_id = parts[4]
+                message = parts[5].strip('"')
+                
+                await websocket_manager.broadcast({
+                    "type": "enter",
+                    "data": {
+                        "uid": tag_id,
+                        "protocol": protocol,
+                        "technology": tech,
+                        "text": message
+                    }
+                })
+        
+        elif line.startswith("OK:LEAVE:"):
+            # Parse: OK:LEAVE:ID
+            parts = line.split(":", 2)
+            if len(parts) >= 3:
+                tag_id = parts[2]
+                
+                await websocket_manager.broadcast({
+                    "type": "leave",
+                    "data": {
+                        "uid": tag_id
+                    }
+                })
+        
+        elif line.startswith("POLLEND"):
+            await websocket_manager.broadcast({
+                "type": "poll_ended",
+                "message": "Polling session ended"
+            })
+            
+    except Exception as e:
+        print(f"Error parsing NFC event '{line}': {e}")
+
+async def stop_nfc_polling():
+    """Stop NFC polling"""
+    global polling_active, polling_task
+    
+    polling_active = False
+    
+    if polling_task and not polling_task.done():
+        polling_task.cancel()
+        try:
+            await polling_task
+        except asyncio.CancelledError:
+            pass
+    
+    polling_task = None
+
+# WebSocket endpoint for real-time NFC events
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for streaming real-time NFC events"""
+    await websocket_manager.connect(websocket)
+    
+    # Send initial status
+    await websocket.send_json({
+        "type": "status",
+        "data": {
+            "connected": True,
+            "nfc_available": nfc_reader_instance is not None,
+            "polling_active": polling_active
+        }
+    })
+    
+    try:
+        while True:
+            # Keep the connection alive and handle any client messages
+            try:
+                message = await websocket.receive_text()
+                # Echo back any messages (could be used for client-side ping/pong)
+                await websocket.send_json({"type": "echo", "message": message})
+            except WebSocketDisconnect:
+                break
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+    finally:
+        websocket_manager.disconnect(websocket)
+
+# Simplified REST API endpoints
+@app.get("/ping", response_model=NFCPingResponse)
+async def ping():
+    """Ping endpoint to check if NFC system is available"""
+    return NFCPingResponse(
+        success=True,
+        message="NFC API is running",
+        initialized=nfc_reader_instance is not None
     )
 
-@app.post("/read", response_model=NFCReadResponse)
-async def read_tag(request: NFCReadRequest):
-    """Read text from a single NFC tag"""
+@app.post("/enable", response_model=NFCEnableDisableResponse)
+async def enable_polling():
+    """Enable continuous NFC polling and stream events via WebSocket"""
+    global polling_task
+    
     check_nfc_available()
     
     try:
-        # Start discovery if not already active
-        if not nfc_reader_instance.discovery_active:
-            nfc_reader_instance.start_discovery()
-        
-        # Wait for tag with text
-        result = nfc_reader_instance.wait_for_tag(timeout=request.timeout)
-        
-        if result:
-            # Get additional tag info
-            tag_info = nfc_reader_instance.get_tag_info() or {}
-            
-            tag_data = NFCTagResponse(
-                text=result.get('text'),
-                language=result.get('language'),
-                uid=tag_info.get('uid'),
-                technology_name=tag_info.get('technology_name')
-            )
-            
-            return NFCReadResponse(
+        if polling_active:
+            return NFCEnableDisableResponse(
                 success=True,
-                data=tag_data,
-                message="Successfully read NFC tag"
+                message="NFC polling is already active"
             )
-        else:
-            return NFCReadResponse(
-                success=False,
-                message=f"No NFC tag with text found within {request.timeout} seconds"
-            )
-            
+        
+        # Start polling in background task
+        polling_task = asyncio.create_task(start_nfc_polling())
+        
+        # Give it a moment to start
+        await asyncio.sleep(0.1)
+        
+        return NFCEnableDisableResponse(
+            success=True,
+            message="NFC polling enabled successfully"
+        )
+        
     except Exception as e:
-        return NFCReadResponse(
+        return NFCEnableDisableResponse(
             success=False,
-            message=f"Error reading NFC tag: {str(e)}"
+            message=f"Error enabling NFC polling: {str(e)}"
         )
 
-@app.post("/read/multiple", response_model=NFCMultiReadResponse)
-async def read_multiple_tags(request: NFCMultiReadRequest):
-    """Read text from multiple NFC tags"""
-    check_nfc_available()
-    
+@app.post("/disable", response_model=NFCEnableDisableResponse)
+async def disable_polling():
+    """Disable continuous NFC polling"""
     try:
-        # Start discovery if not already active
-        if not nfc_reader_instance.discovery_active:
-            nfc_reader_instance.start_discovery()
+        if not polling_active:
+            return NFCEnableDisableResponse(
+                success=True,
+                message="NFC polling is already inactive"
+            )
         
-        # Wait for multiple tags
-        results = nfc_reader_instance.wait_for_multiple_tags(
-            min_tags=request.min_tags,
-            timeout=request.timeout
+        await stop_nfc_polling()
+        
+        return NFCEnableDisableResponse(
+            success=True,
+            message="NFC polling disabled successfully"
         )
         
-        if results:
-            tag_responses = []
-            for result in results:
-                tag_data = NFCTagResponse(
-                    text=result.get('text'),
-                    language=result.get('language'),
-                    uid=result.get('uid'),
-                    technology_name=result.get('technology_name')
-                )
-                tag_responses.append(tag_data)
-            
-            return NFCMultiReadResponse(
-                success=True,
-                data=tag_responses,
-                count=len(tag_responses),
-                message=f"Successfully read {len(tag_responses)} NFC tags"
-            )
-        else:
-            return NFCMultiReadResponse(
-                success=False,
-                count=0,
-                message=f"Found fewer than {request.min_tags} NFC tags within {request.timeout} seconds"
-            )
-            
     except Exception as e:
-        return NFCMultiReadResponse(
+        return NFCEnableDisableResponse(
             success=False,
-            count=0,
-            message=f"Error reading multiple NFC tags: {str(e)}"
+            message=f"Error disabling NFC polling: {str(e)}"
         )
 
 @app.post("/write", response_model=NFCWriteResponse)
@@ -216,103 +388,61 @@ async def write_tag(request: NFCWriteRequest):
     check_nfc_available()
     
     try:
-        # Start discovery if not already active
-        if not nfc_reader_instance.discovery_active:
-            nfc_reader_instance.start_discovery()
-        
-        # Wait for tag and write text
-        start_time = time.time()
-        while time.time() - start_time < request.timeout:
-            if nfc_reader_instance.is_tag_present():
-                success = nfc_reader_instance.write_text(request.text, request.language_code)
-                if success:
-                    return NFCWriteResponse(
-                        success=True,
-                        message=f"Successfully wrote text '{request.text}' to NFC tag"
-                    )
-                else:
-                    return NFCWriteResponse(
-                        success=False,
-                        message="Failed to write text to NFC tag"
-                    )
-            await asyncio.sleep(0.1)
-        
-        return NFCWriteResponse(
-            success=False,
-            message=f"No NFC tag found within {request.timeout} seconds"
-        )
-        
+        if use_pico_bridge:
+            # Use Pico bridge WRITE command
+            if hasattr(nfc_reader_instance, 'device') and nfc_reader_instance.device:
+                command = f"WRITE:{request.text}\n"
+                nfc_reader_instance.device.write(command.encode())
+                
+                # Wait for response
+                start_time = time.time()
+                while time.time() - start_time < 10:  # 10 second timeout
+                    if nfc_reader_instance.device.in_waiting > 0:
+                        try:
+                            line = nfc_reader_instance.device.readline().decode().strip()
+                            if line == "OK:WRITE_SUCCESS":
+                                return NFCWriteResponse(
+                                    success=True,
+                                    message=f"Successfully wrote '{request.text}' to NFC tag"
+                                )
+                            elif line.startswith("ERROR:"):
+                                return NFCWriteResponse(
+                                    success=False,
+                                    message=f"Write failed: {line}"
+                                )
+                        except Exception as e:
+                            print(f"Error reading write response: {e}")
+                    
+                    await asyncio.sleep(0.1)
+                
+                return NFCWriteResponse(
+                    success=False,
+                    message="Write operation timed out"
+                )
+            else:
+                return NFCWriteResponse(
+                    success=False,
+                    message="Pico bridge device not available"
+                )
+        else:
+            # Use hardware driver
+            success = nfc_reader_instance.write_text(request.text)
+            if success:
+                return NFCWriteResponse(
+                    success=True,
+                    message=f"Successfully wrote '{request.text}' to NFC tag"
+                )
+            else:
+                return NFCWriteResponse(
+                    success=False,
+                    message="Failed to write to NFC tag"
+                )
+                
     except Exception as e:
         return NFCWriteResponse(
             success=False,
             message=f"Error writing to NFC tag: {str(e)}"
         )
-
-@app.get("/info")
-async def get_tag_info():
-    """Get detailed information about currently detected NFC tags"""
-    check_nfc_available()
-    
-    try:
-        # Start discovery if not already active
-        if not nfc_reader_instance.discovery_active:
-            nfc_reader_instance.start_discovery()
-        
-        num_tags = nfc_reader_instance.get_num_tags()
-        
-        if num_tags == 0:
-            return {
-                "success": False,
-                "message": "No NFC tags detected",
-                "count": 0,
-                "tags": []
-            }
-        
-        # Get info for all tags
-        all_tags_info = nfc_reader_instance.get_all_tags_info() or []
-        
-        return {
-            "success": True,
-            "message": f"Found {num_tags} NFC tag(s)",
-            "count": num_tags,
-            "tags": all_tags_info
-        }
-        
-    except Exception as e:
-        return {
-            "success": False,
-            "message": f"Error getting tag info: {str(e)}",
-            "count": 0,
-            "tags": []
-        }
-
-@app.post("/discovery/start")
-async def start_discovery():
-    """Manually start NFC tag discovery"""
-    check_nfc_available()
-    
-    try:
-        if not nfc_reader_instance.discovery_active:
-            nfc_reader_instance.start_discovery()
-            return {"success": True, "message": "NFC discovery started"}
-        else:
-            return {"success": True, "message": "NFC discovery already active"}
-    except Exception as e:
-        return {"success": False, "message": f"Error starting discovery: {str(e)}"}
-
-@app.post("/discovery/stop")
-async def stop_discovery():
-    """Manually stop NFC tag discovery"""
-    check_nfc_available()
-    
-    try:
-        if nfc_reader_instance.discovery_active:
-            nfc_reader_instance.stop_discovery()
-            return {"success": True, "message": "NFC discovery stopped"}
-        else:
-            return {"success": True, "message": "NFC discovery already inactive"}
-    except Exception as e:
-        return {"success": False, "message": f"Error stopping discovery: {str(e)}"}
 
 if __name__ == "__main__":
     import argparse
@@ -322,22 +452,34 @@ if __name__ == "__main__":
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
     parser.add_argument("--port", type=int, default=10001, help="Port to bind to")
     parser.add_argument("--reload", action="store_true", help="Enable auto-reload for development")
+    
+    # Hardware NFC driver options (I2C/SPI)
     parser.add_argument("--i2c-bus", default="/dev/i2c-1", help="I2C bus device (default: /dev/i2c-1)")
     parser.add_argument("--gpio-int", type=int, default=23, help="GPIO pin for NFC interrupt (default: 23)")
     parser.add_argument("--gpio-enable", type=int, default=24, help="GPIO pin for NFC enable (default: 24)")
     parser.add_argument("--gpio-fwdnld", type=int, default=25, help="GPIO pin for NFC firmware download (default: 25)")
     
+    # USB Pico bridge options
+    parser.add_argument("--usb", action="store_true", help="Use Pi Pico NFC bridge over USB/Serial")
+    parser.add_argument("--usb-device", help="USB serial device path (e.g., /dev/ttyACM0)")
+    
     args = parser.parse_args()
     
-    # Set NFC configuration environment variables before importing NFC modules
-    os.environ['NFC_I2C_BUS'] = args.i2c_bus
-    os.environ['NFC_PIN_INT'] = str(args.gpio_int)
-    os.environ['NFC_PIN_ENABLE'] = str(args.gpio_enable)
-    os.environ['NFC_PIN_FWDNLD'] = str(args.gpio_fwdnld)
-    
     print(f"Starting NFC API Server on {args.host}:{args.port}")
-    print(f"Using I2C bus: {args.i2c_bus}")
-    print(f"Using GPIO pins - INT: {args.gpio_int}, ENABLE: {args.gpio_enable}, FWDNLD: {args.gpio_fwdnld}")
+    
+    if args.usb or args.usb_device:
+        device_path = args.usb_device or "auto-detect"
+        print(f"Using Pi Pico NFC Bridge (USB/Serial) - Device: {device_path}")
+    else:
+        # Set NFC configuration environment variables for hardware driver
+        os.environ['NFC_I2C_BUS'] = args.i2c_bus
+        os.environ['NFC_PIN_INT'] = str(args.gpio_int)
+        os.environ['NFC_PIN_ENABLE'] = str(args.gpio_enable)
+        os.environ['NFC_PIN_FWDNLD'] = str(args.gpio_fwdnld)
+        
+        print(f"Using hardware NFC driver (I2C/SPI)")
+        print(f"I2C bus: {args.i2c_bus}")
+        print(f"GPIO pins - INT: {args.gpio_int}, ENABLE: {args.gpio_enable}, FWDNLD: {args.gpio_fwdnld}")
     
     uvicorn.run(
         "nfc_api:app",

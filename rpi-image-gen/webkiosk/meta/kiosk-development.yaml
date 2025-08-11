@@ -1,0 +1,6 @@
+---
+name: kiosk-development
+mmdebstrap:
+  packages:
+    - build-essential
+    - python3-dev

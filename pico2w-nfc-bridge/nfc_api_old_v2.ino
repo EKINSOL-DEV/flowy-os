@@ -62,9 +62,10 @@ class NFCBridge {
 private:
     bool initialized;
     unsigned long last_keepalive;
+    bool polling_active;
     
 public:
-    NFCBridge() : initialized(false), last_keepalive(0) {}
+    NFCBridge() : initialized(false), last_keepalive(0), polling_active(false) {}
     
     bool initialize() {
         Serial.println("NFC: Starting initialization using library...");
@@ -114,7 +115,7 @@ public:
         }
     }
     
-    bool pollForTags(int maxTags = 1, uint32_t timeout_ms = 10000) {
+    bool pollForTags(int maxTags = 1, uint32_t timeout_ms = 0) {
         if (!initialized) {
             Serial.println("ERROR: NFC not initialized");
             return false;
@@ -122,67 +123,181 @@ public:
         
         int tagsFound = 0;
         unsigned long startTime = millis();
+        bool hasTimeout = (timeout_ms > 0);
+        String seenTags[10]; // Track up to 10 unique tag IDs
+        int uniqueTagCount = 0;
         
         // Start discovery to detect tags
         nfc.startDiscovery();
+        polling_active = true;
         
-        while (tagsFound < maxTags && (millis() - startTime) < timeout_ms) {
-            // Check for tag detection with remaining timeout
-            uint32_t remainingTimeout = timeout_ms - (millis() - startTime);
-            if (remainingTimeout <= 0) break;
+        if (maxTags == 1 && !hasTimeout) {
+            // Special case: POLL command - poll forever, report enter/leave
+            String lastDetectedTagId = "";
+            bool tagCurrentlyPresent = false;
+            unsigned long tagLostStartTime = 0;
+            const unsigned long TAG_DEBOUNCE_MS = 1000; // 1 second debounce
             
-            if (nfc.isTagDetected(min(remainingTimeout, (uint32_t)1000))) {
-                tagsFound++;
-                
-                // Start building compact response: OK:TAG#:PROTOCOL:TECH:ID:"MESSAGE"
-                Serial.print("OK:");
-                Serial.print(tagsFound);
-                Serial.print(":");
-                Serial.print(nfc.remoteDevice.getProtocol());
-                Serial.print(":");
-                Serial.print(nfc.remoteDevice.getModeTech());
-                Serial.print(":");
-                
-                // Display tag ID (compact hex without spaces)
-                switch (nfc.remoteDevice.getModeTech()) {
-                    case nfc.tech.PASSIVE_NFCA:
-                        printCompactHex(nfc.remoteDevice.getNFCID(), nfc.remoteDevice.getNFCIDLen());
-                        break;
-                    default:
-                        Serial.print("NONE");
-                        break;
-                }
-                
-                Serial.print(":\"");
-                
-                // Read NDEF content if available
-                if (nfc.remoteDevice.getProtocol() == nfc.protocol.T2T) {
-                    readT2TNdefContentCompact();
-                } else {
-                    readTagContentCompact(); // Fallback to high-level method
-                }
-                
-                Serial.println("\"");
-                
-                // Wait for tag removal before looking for next tag
-                if (tagsFound < maxTags) {
+            while (true) {
+                if (nfc.isTagDetected(500)) {
+                    // Tag detected - get tag ID
+                    String currentTagId = "";
+                    switch (nfc.remoteDevice.getModeTech()) {
+                        case nfc.tech.PASSIVE_NFCA:
+                            for (int i = 0; i < nfc.remoteDevice.getNFCIDLen(); i++) {
+                                if (nfc.remoteDevice.getNFCID()[i] < 16) currentTagId += "0";
+                                currentTagId += String(nfc.remoteDevice.getNFCID()[i], HEX);
+                            }
+                            break;
+                        default:
+                            currentTagId = "NONE";
+                            break;
+                    }
+                    
+                    // Report tag entry (always report, even if same tag)
+                    Serial.print("OK:ENTER:");
+                    Serial.print(nfc.remoteDevice.getProtocol());
+                    Serial.print(":");
+                    Serial.print(nfc.remoteDevice.getModeTech());
+                    Serial.print(":");
+                    Serial.print(currentTagId);
+                    Serial.print(":\"");
+                    
+                    // Read content based on tag protocol
+                    if (nfc.remoteDevice.getProtocol() == nfc.protocol.T2T) {
+                        readT2TNdefContentCompact();
+                    } else if (nfc.remoteDevice.getProtocol() == nfc.protocol.MIFARE) {
+                        readMifareClassicCompact();
+                    } else {
+                        readTagContentCompact();
+                    }
+                    
+                    Serial.println("\"");
+                    
+                    // Now wait for tag removal (this blocks until tag is gone)
                     nfc.waitForTagRemoval();
-                    nfc.reset(); // Reset for next detection
+                    
+                    // Tag is now gone - report leave  
+                    Serial.print("OK:LEAVE:");
+                    Serial.println(currentTagId);
+                    
+                    // Simple approach - just restart discovery since detection is actually working
+                    nfc.stopDiscovery();
+                    delay(50); // Short delay to let hardware settle
+                    nfc.startDiscovery();
+                }
+                
+                delay(100); // Small delay to prevent tight loop
+                
+                // Check for ENDPOLL command
+                if (Serial.available()) {
+                    String input = Serial.readStringUntil('\n');
+                    input.trim();
+                    input.toUpperCase();
+                    if (input == "ENDPOLL") {
+                        break;
+                    } else if (input == "PING") {
+                        Serial.println("OK:PONG");
+                    } else {
+                        Serial.println("ERROR:POLLING_ACTIVE");
+                    }
                 }
             }
-            
-            delay(100); // Small delay to prevent tight loop
+        } else {
+            // POLL:x or POLL:x:y - collect unique tags
+            while (uniqueTagCount < maxTags) {
+                // Check timeout if specified
+                if (hasTimeout && (millis() - startTime) >= timeout_ms) {
+                    break;
+                }
+                
+                if (nfc.isTagDetected(1000)) {
+                    // Get tag ID for uniqueness check
+                    String tagId = "";
+                    switch (nfc.remoteDevice.getModeTech()) {
+                        case nfc.tech.PASSIVE_NFCA:
+                            for (int i = 0; i < nfc.remoteDevice.getNFCIDLen(); i++) {
+                                if (nfc.remoteDevice.getNFCID()[i] < 16) tagId += "0";
+                                tagId += String(nfc.remoteDevice.getNFCID()[i], HEX);
+                            }
+                            break;
+                        default:
+                            tagId = "NONE";
+                            break;
+                    }
+                    
+                    // Check if this tag ID has been seen before
+                    bool isNewTag = true;
+                    for (int i = 0; i < uniqueTagCount; i++) {
+                        if (seenTags[i] == tagId) {
+                            isNewTag = false;
+                            break;
+                        }
+                    }
+                    
+                    if (isNewTag) {
+                        // Add to seen tags
+                        if (uniqueTagCount < 10) {
+                            seenTags[uniqueTagCount] = tagId;
+                        }
+                        uniqueTagCount++;
+                        
+                        // Report tag: OK:TAG#:PROTOCOL:TECH:ID:"MESSAGE"
+                        Serial.print("OK:");
+                        Serial.print(uniqueTagCount);
+                        Serial.print(":");
+                        Serial.print(nfc.remoteDevice.getProtocol());
+                        Serial.print(":");
+                        Serial.print(nfc.remoteDevice.getModeTech());
+                        Serial.print(":");
+                        Serial.print(tagId);
+                        Serial.print(":\"");
+                        
+                        // Read content based on tag protocol
+                        if (nfc.remoteDevice.getProtocol() == nfc.protocol.T2T) {
+                            readT2TNdefContentCompact();
+                        } else if (nfc.remoteDevice.getProtocol() == nfc.protocol.MIFARE) {
+                            readMifareClassicCompact();
+                        } else {
+                            readTagContentCompact();
+                        }
+                        
+                        Serial.println("\"");
+                    }
+                    
+                    // Wait for tag removal before continuing
+                    nfc.waitForTagRemoval();
+                    nfc.reset();
+                }
+                
+                delay(100);
+                
+                // Check for ENDPOLL command  
+                if (Serial.available()) {
+                    String input = Serial.readStringUntil('\n');
+                    input.trim();
+                    input.toUpperCase();
+                    if (input == "ENDPOLL") {
+                        break;
+                    } else if (input == "PING") {
+                        Serial.println("OK:PONG");
+                    } else {
+                        Serial.println("ERROR:POLLING_ACTIVE");
+                    }
+                }
+            }
         }
         
         // Stop discovery when done
         nfc.stopDiscovery();
+        polling_active = false;
         
-        if (tagsFound == 0) {
+        if (maxTags > 1 && uniqueTagCount == 0 && hasTimeout) {
             Serial.println("ERROR:TIMEOUT");
         }
         
         Serial.println("POLLEND");
-        return tagsFound > 0;
+        return (maxTags == 1) ? true : (uniqueTagCount > 0);
     }
     
     void readT2TNdefContent() {
@@ -318,9 +433,11 @@ public:
         
         // Wait for tag detection with timeout
         if (nfc.isTagDetected(10000)) {
-            // Check if it's a T2T tag (like NTAG215)
+            // Check tag protocol and handle appropriately
             if (nfc.remoteDevice.getProtocol() == nfc.protocol.T2T) {
                 return writeNdefToT2T(text);
+            } else if (nfc.remoteDevice.getProtocol() == nfc.protocol.MIFARE) {
+                return writeMifareClassic(text);
             } else {
                 Serial.println("ERROR:UNSUPPORTED_TAG");
                 nfc.stopDiscovery();
@@ -331,6 +448,57 @@ public:
             nfc.stopDiscovery();
             return false;
         }
+    }
+    
+    bool writeMifareClassic(String text) {
+        // Write text to Mifare Classic block 4 (simple implementation)
+        bool status;
+        unsigned char Resp[256];
+        unsigned char RespSize;
+        const uint8_t BLK_NB = 4; // Block 4 (sector 1)
+        
+        // Default Mifare Classic key (all 0xFF)
+        unsigned char Auth[] = {0x40, BLK_NB / 4, 0x10, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+        
+        // Determine ChipWriteAck based on chip model
+        uint8_t ChipWriteAck = (nfc.getChipModel() == PN7160) ? 0x14 : 0x00;
+        
+        // Authenticate sector 1
+        status = nfc.readerTagCmd(Auth, sizeof(Auth), Resp, &RespSize);
+        if ((status == NFC_ERROR) || (Resp[RespSize - 1] != 0)) {
+            Serial.println("ERROR:AUTH_FAILED");
+            nfc.stopDiscovery();
+            return false;
+        }
+        
+        // Prepare data to write (pad text to 16 bytes)
+        unsigned char data[16] = {0};
+        int textLen = min(text.length(), 16);
+        for (int i = 0; i < textLen; i++) {
+            data[i] = text.charAt(i);
+        }
+        
+        // Write command part 1
+        unsigned char WritePart1[] = {0x10, 0xA0, BLK_NB};
+        status = nfc.readerTagCmd(WritePart1, sizeof(WritePart1), Resp, &RespSize);
+        if ((status == NFC_ERROR) || (Resp[RespSize - 1] != ChipWriteAck)) {
+            Serial.println("ERROR:WRITE_CMD_FAILED");
+            nfc.stopDiscovery();
+            return false;
+        }
+        
+        // Write command part 2 (actual data)
+        unsigned char WritePart2[17] = {0x10}; // Command byte + 16 data bytes
+        memcpy(WritePart2 + 1, data, 16);
+        status = nfc.readerTagCmd(WritePart2, sizeof(WritePart2), Resp, &RespSize);
+        if ((status == NFC_ERROR) || (Resp[RespSize - 1] != ChipWriteAck)) {
+            Serial.println("ERROR:WRITE_DATA_FAILED");
+            nfc.stopDiscovery();
+            return false;
+        }
+        
+        nfc.stopDiscovery();
+        return true;
     }
     
     bool writeNdefToT2T(String text) {
@@ -534,6 +702,46 @@ public:
         Serial.print(extractedText); // Print text directly (will be empty string if nothing found)
     }
     
+    void readMifareClassicCompact() {
+        // Read text from Mifare Classic block 4
+        bool status;
+        unsigned char Resp[256];
+        unsigned char RespSize;
+        const uint8_t BLK_NB = 4; // Block 4 (sector 1)
+        
+        // Default Mifare Classic key (all 0xFF)
+        unsigned char Auth[] = {0x40, BLK_NB / 4, 0x10, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+        
+        // Read block command
+        unsigned char Read[] = {0x10, 0x30, BLK_NB};
+        
+        // Authenticate sector 1
+        status = nfc.readerTagCmd(Auth, sizeof(Auth), Resp, &RespSize);
+        if ((status == NFC_ERROR) || (Resp[RespSize - 1] != 0)) {
+            // Auth failed - print empty string
+            return;
+        }
+        
+        // Read block 4
+        status = nfc.readerTagCmd(Read, sizeof(Read), Resp, &RespSize);
+        if ((status == NFC_ERROR) || (Resp[RespSize - 1] != 0)) {
+            // Read failed - print empty string
+            return;
+        }
+        
+        // Convert block data to text (skip status byte, limit to 16 bytes)
+        String extractedText = "";
+        int dataLen = min(RespSize - 2, 16); // -2 for status bytes
+        for (int i = 1; i < dataLen + 1; i++) {
+            if (Resp[i] == 0) break; // Stop at null terminator
+            if (Resp[i] >= 32 && Resp[i] <= 126) { // Only printable ASCII
+                extractedText += (char)Resp[i];
+            }
+        }
+        
+        Serial.print(extractedText); // Print text directly
+    }
+    
     void readTagContentCompact() {
         // Reset NDEF reception flag
         ndefReceived = false;
@@ -549,6 +757,15 @@ public:
         if (ndefReceived && lastNdefText != "") {
             Serial.print(lastNdefText);
         }
+    }
+    
+    bool isPollingActive() {
+        return polling_active;
+    }
+    
+    void endPolling() {
+        polling_active = false;
+        nfc.stopDiscovery();
     }
     
 };
@@ -586,28 +803,61 @@ void loop() {
     bridge->maintainConnection();
     
     if (Serial.available()) {
-        String command = Serial.readStringUntil('\n');
-        command.trim();
+        char c = Serial.read();
+        static String inputBuffer = "";
         
-        if (command.length() > 0) {
-            processCommand(command);
+        if (c == '\n' || c == '\r') {
+            // Complete command received
+            inputBuffer.trim();
+            if (inputBuffer.length() > 0) {
+                processCommand(inputBuffer);
+                inputBuffer = ""; // Clear buffer
+            }
+        } else {
+            // Add character to buffer
+            inputBuffer += c;
         }
     }
 }
 
 void processCommand(String cmdline) {
+    String originalCmdline = cmdline; // Keep original case for message extraction
     cmdline.toUpperCase();
+    
+    // Check if polling is active and only allow PING and ENDPOLL
+    if (bridge->isPollingActive()) {
+        if (cmdline == "PING") {
+            Serial.println("OK:PONG");
+            return;
+        } else if (cmdline == "ENDPOLL") {
+            bridge->endPolling();
+            Serial.println("POLLEND");
+            return;
+        } else {
+            Serial.println("ERROR:POLLING_ACTIVE");
+            return;
+        }
+    }
     
     if (cmdline == "HELP") {
         Serial.println("Commands:");
         Serial.println("HELP");
-        Serial.println("- Returns this");
-        Serial.println("PING - Returns OK:PONG");
-        Serial.println("POLL | POLL:<amount of tags>");
-        Serial.println("- Returns OK:TAGNUMBER:PROTOCOL:TECH:ID:\"MESSAGE\" for every detected tag until either all tags have been found or 10 seconds have passed");
-        Serial.println("- Ends with POLLEND when polling ends, even after an ERROR");
+        Serial.println("- Returns this help text");
+        Serial.println("PING");
+        Serial.println("- Returns OK:PONG to test connection");
+        Serial.println("POLL");
+        Serial.println("- Polls forever, reports OK:ENTER:PROTOCOL:TECH:ID:\"MESSAGE\" when tag enters");
+        Serial.println("- Reports OK:LEAVE:ID when tag leaves");
+        Serial.println("- While polling, only PING and ENDPOLL commands work");
+        Serial.println("POLL:<amount>");
+        Serial.println("- Polls until <amount> unique tags found, returns OK:TAG#:PROTOCOL:TECH:ID:\"MESSAGE\"");
+        Serial.println("POLL:<amount>:<timeout_seconds>");
+        Serial.println("- Same as POLL:<amount> but with timeout in seconds");
+        Serial.println("- Always ends with POLLEND when polling ends, even after an ERROR");
         Serial.println("WRITE:<message>");
-        Serial.println("- Writes a message to the tag");
+        Serial.println("- Writes a message to the tag, returns OK:WRITE_SUCCESS or ERROR");
+        Serial.println("ENDPOLL");
+        Serial.println("- Stops active polling operation");
         
     }
     else if (cmdline == "PING") {
@@ -615,22 +865,39 @@ void processCommand(String cmdline) {
     }
     else if (cmdline == "POLL" || cmdline.startsWith("POLL:")) {
         int maxTags = 1;
+        uint32_t timeoutMs = 0; // 0 = no timeout (poll forever)
         
-        // Parse optional argument
+        // Parse arguments
         if (cmdline.startsWith("POLL:")) {
             String argStr = cmdline.substring(5);
-            maxTags = argStr.toInt();
-            if (maxTags <= 0) maxTags = 1; // Default to 1 if invalid
+            
+            // Check for POLL:x:y syntax (maxTags:timeoutSeconds)
+            int colonIndex = argStr.indexOf(':');
+            if (colonIndex > 0) {
+                // POLL:x:y format
+                String maxTagsStr = argStr.substring(0, colonIndex);
+                String timeoutStr = argStr.substring(colonIndex + 1);
+                
+                maxTags = maxTagsStr.toInt();
+                int timeoutSec = timeoutStr.toInt();
+                
+                if (maxTags <= 0) maxTags = 1;
+                if (timeoutSec > 0) timeoutMs = timeoutSec * 1000; // Convert to milliseconds
+            } else {
+                // POLL:x format
+                maxTags = argStr.toInt();
+                if (maxTags <= 0) maxTags = 1;
+            }
         }
         
-        if (bridge->pollForTags(maxTags)) {
+        if (bridge->pollForTags(maxTags, timeoutMs)) {
             // Success message already printed by pollForTags
         } else {
             // Error message already printed by pollForTags
         }
     }
     else if (cmdline.startsWith("WRITE:")) {
-        String message = cmdline.substring(6); // Remove "WRITE:" prefix
+        String message = originalCmdline.substring(6); // Remove "WRITE:" prefix from original case
         if (bridge->writeToTag(message)) {
             Serial.println("OK:WRITE_SUCCESS");
         } else {

@@ -12,4 +12,5 @@ mmdebstrap:
 
       127.0.0.1   localhost
       127.0.1.1   $IGconf_device_hostname
+      0.0.0.0 apresolve.spotify.com
       EOF

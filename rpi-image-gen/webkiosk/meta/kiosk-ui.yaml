@@ -1,0 +1,6 @@
+---
+name: kiosk-ui
+mmdebstrap:
+  packages:
+    - plymouth
+    - plymouth-themes
