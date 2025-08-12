@@ -10,3 +10,4 @@ mmdebstrap:
     - python3.11-venv
     - triggerhappy
     - wlr-randr
+    - ntpdate

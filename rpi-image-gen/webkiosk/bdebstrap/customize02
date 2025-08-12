@@ -4,15 +4,16 @@
 
 echo "Installing hardware drivers and firmware..."
 
-# Add user to netdev group for network management
-chroot "$1" usermod -a -G netdev "$IGconf_device_user1"
-
 # Call adapted driver scripts with chroot parameter
 bash ./driver-scripts/audio.sh "$1"
 bash ./driver-scripts/display.sh "$1"
 bash ./driver-scripts/wifi.sh "$1"
 bash ./driver-scripts/raspi-config.sh "$1"
 # bash ./driver-scripts/nfc.sh "$1"
+
+# Set up clock
+chroot "$1" ntpdate -u pool.ntp.org
+chroot "$1" timedatectl set-ntp true
 
 # Set up touch rotation to match display rotation (270 degrees)
 mkdir -p "$1/etc/udev/rules.d"
