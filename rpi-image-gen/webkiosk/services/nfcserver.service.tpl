@@ -1,12 +1,12 @@
 [Unit]
 Description=Flowy NFC Server Session
-After=multi-user.target flowy-nfc-init.service
+After=multi-user.target
 
 [Service]
 User=root
 Restart=always
-WorkingDirectory=<SERVER_DIR>
-ExecStart=<PYTHON_EXEC> nfc_api.py --i2c-bus /dev/i2c-4 --gpio-int 25 --gpio-enable 9 --gpio-fwdnld 8
+WorkingDirectory=<SERVER_DIR>/nfc
+ExecStart=<PYTHON_EXEC> nfc_api.py --usb-device /dev/ttyACM0
 StandardError=journal
 
 [Install]

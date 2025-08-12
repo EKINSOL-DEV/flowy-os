@@ -11,9 +11,8 @@ bash ./driver-scripts/wifi.sh "$1"
 bash ./driver-scripts/raspi-config.sh "$1"
 # bash ./driver-scripts/nfc.sh "$1"
 
-# Set up clock
-chroot "$1" ntpdate -u pool.ntp.org
-chroot "$1" timedatectl set-ntp true
+# Enable NTP time synchronization service
+$BDEBSTRAP_HOOKS/enable-units "$1" systemd-timesyncd
 
 # Set up touch rotation to match display rotation (270 degrees)
 mkdir -p "$1/etc/udev/rules.d"

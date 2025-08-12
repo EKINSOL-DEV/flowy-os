@@ -90,9 +90,9 @@ async def lifespan(app: FastAPI):
                 if arg == "--usb-device" and i + 1 < len(sys.argv):
                     usb_device = sys.argv[i + 1]
                     break
-            nfc_reader_instance = NFCReader(device_path=usb_device, auto_cleanup=True)
+            nfc_reader_instance = NFCReader(device_path=usb_device, auto_cleanup=False)
         else:
-            nfc_reader_instance = NFCReader(auto_cleanup=True)
+            nfc_reader_instance = NFCReader(auto_cleanup=False)
         
         nfc_reader_instance.initialize()
         print("NFC reader initialized successfully")
@@ -169,14 +169,14 @@ async def poll_pico_bridge():
     
     try:
         # Send POLL command to start continuous polling
-        if hasattr(nfc_reader_instance, 'device') and nfc_reader_instance.device:
-            nfc_reader_instance.device.write("POLL\n".encode())
+        if hasattr(nfc_reader_instance, 'serial_port') and nfc_reader_instance.serial_port:
+            nfc_reader_instance.serial_port.write("POLL\n".encode())
             
             while polling_active:
                 # Read lines from serial and parse NFC events
-                if nfc_reader_instance.device.in_waiting > 0:
+                if nfc_reader_instance.serial_port.in_waiting > 0:
                     try:
-                        line = nfc_reader_instance.device.readline().decode().strip()
+                        line = nfc_reader_instance.serial_port.readline().decode().strip()
                         if line:
                             await parse_nfc_event(line)
                     except Exception as e:
@@ -189,8 +189,8 @@ async def poll_pico_bridge():
     finally:
         # Send ENDPOLL to stop polling
         try:
-            if hasattr(nfc_reader_instance, 'device') and nfc_reader_instance.device:
-                nfc_reader_instance.device.write("ENDPOLL\n".encode())
+            if hasattr(nfc_reader_instance, 'serial_port') and nfc_reader_instance.serial_port:
+                nfc_reader_instance.serial_port.write("ENDPOLL\n".encode())
         except:
             pass
 
@@ -390,16 +390,16 @@ async def write_tag(request: NFCWriteRequest):
     try:
         if use_pico_bridge:
             # Use Pico bridge WRITE command
-            if hasattr(nfc_reader_instance, 'device') and nfc_reader_instance.device:
+            if hasattr(nfc_reader_instance, 'serial_port') and nfc_reader_instance.serial_port:
                 command = f"WRITE:{request.text}\n"
-                nfc_reader_instance.device.write(command.encode())
+                nfc_reader_instance.serial_port.write(command.encode())
                 
                 # Wait for response
                 start_time = time.time()
                 while time.time() - start_time < 10:  # 10 second timeout
-                    if nfc_reader_instance.device.in_waiting > 0:
+                    if nfc_reader_instance.serial_port.in_waiting > 0:
                         try:
-                            line = nfc_reader_instance.device.readline().decode().strip()
+                            line = nfc_reader_instance.serial_port.readline().decode().strip()
                             if line == "OK:WRITE_SUCCESS":
                                 return NFCWriteResponse(
                                     success=True,

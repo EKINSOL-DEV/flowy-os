@@ -13,10 +13,10 @@ sys-apps/systemd-net-min
 sys-apps/fake-hwclock
 
 # Kiosk-specific packages
-kiosk-base
-kiosk-development
-kiosk-hardware  
-kiosk-ui
+flowy/kiosk-base
+flowy/kiosk-development
+flowy/kiosk-hardware  
+flowy/kiosk-ui
 
 # Additional standard packages
 app-misc/ca-certificates

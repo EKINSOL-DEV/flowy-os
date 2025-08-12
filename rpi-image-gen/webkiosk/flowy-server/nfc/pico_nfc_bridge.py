@@ -79,19 +79,35 @@ class PicoNFCReader:
                     timeout=5.0,
                     write_timeout=5.0
                 )
+                logger.info(f"Serial port opened successfully on {path}")
                 
-                # Give the Pi Pico time to initialize
-                time.sleep(2.0)
+                # Give the Pi Pico time to initialize and send startup messages
+                time.sleep(3.0)
+                logger.info(f"Waited 3 seconds for Arduino initialization")
+                
+                # Clear any startup messages from the buffer
+                if self.serial_port.in_waiting > 0:
+                    startup_data = self.serial_port.read_all().decode('utf-8', errors='ignore')
+                    logger.info(f"Cleared {len(startup_data)} bytes of startup data")
+                    logger.debug(f"Arduino startup messages: {startup_data}")
+                else:
+                    logger.info("No startup messages to clear")
                 
                 # Test connection with ping
-                if self._ping():
+                logger.info("Testing connection with PING command")
+                ping_result = self._ping()
+                logger.info(f"PING test result: {ping_result}")
+                
+                if ping_result:
                     logger.info(f"Successfully connected to Pi Pico NFC bridge on {path}")
                     self.device_path = path
                     self._initialized = True
                     return
+                else:
+                    logger.warning(f"PING test failed on {path}")
                     
             except (serial.SerialException, OSError) as e:
-                logger.debug(f"Failed to connect to {path}: {e}")
+                logger.warning(f"Failed to connect to {path}: {e}")
                 if self.serial_port:
                     self.serial_port.close()
                     self.serial_port = None
@@ -119,8 +135,12 @@ class PicoNFCReader:
         Returns:
             Response string or None if timeout/error
         """
-        if not self._initialized or not self.serial_port:
+        if not self.serial_port:
+            logger.warning("Serial port not available for command")
             return None
+        
+        # Allow commands during initialization (when _initialized is False)
+        logger.debug(f"Sending command: {command}")
         
         try:
             # Clear any existing data in buffers
@@ -144,15 +164,18 @@ class PicoNFCReader:
                         response_lines.append(line)
                         
                         # Check for command completion markers
-                        if (line.startswith("OK:") or 
-                            line.startswith("ERROR:") or 
-                            line == "POLLEND"):
-                            
-                            # For POLL commands, collect all responses until POLLEND
-                            if command.startswith("POLL") and line != "POLLEND":
-                                continue
-                            else:
-                                break
+                        if line == "POLLEND":
+                            # POLL command completed
+                            break
+                        elif line.startswith("ERROR:"):
+                            # Any error response completes the command
+                            break
+                        elif line.startswith("OK:") and not command.startswith("POLL") and not line.startswith("OK:ENTER:") and not line.startswith("OK:LEAVE:"):
+                            # Non-POLL OK response (like OK:PONG, OK:WRITE_SUCCESS)
+                            break
+                        elif command.startswith("WRITE:") and (line.startswith("ERROR:") or line == "OK:WRITE_SUCCESS"):
+                            # WRITE command specific responses
+                            break
                 
                 time.sleep(0.01)  # Small delay to prevent busy waiting
             
@@ -168,8 +191,18 @@ class PicoNFCReader:
     
     def _ping(self) -> bool:
         """Test connection to Pi Pico"""
+        logger.debug("Starting PING test")
         response = self._send_command("PING", timeout=3.0)
-        return response == "OK:PONG"
+        logger.debug(f"PING response received: {repr(response)}")
+        
+        if response:
+            # Check if the response contains "OK:PONG" (may have other lines)
+            has_pong = "OK:PONG" in response
+            logger.debug(f"Contains 'OK:PONG': {has_pong}")
+            return has_pong
+        
+        logger.debug("No response to PING")
+        return False
     
     def _parse_poll_response(self, response: str) -> List[PicoNFCTag]:
         """Parse the response from a POLL command"""
@@ -177,27 +210,26 @@ class PicoNFCReader:
         lines = response.split('\n')
         
         for line in lines:
-            if line.startswith("OK:"):
-                # Format: OK:TAG#:PROTOCOL:TECH:ID:"MESSAGE"
+            if line.startswith("OK:ENTER:"):
+                # Format: OK:ENTER:PROTOCOL:TECH:ID:"MESSAGE"
                 try:
-                    parts = line[3:].split(':', 5)  # Skip "OK:" prefix
-                    if len(parts) >= 5:
-                        tag_number = int(parts[0])
-                        protocol = parts[1]
-                        technology = parts[2]
-                        tag_id = parts[3]
+                    parts = line[9:].split(':', 4)  # Skip "OK:ENTER:" prefix
+                    if len(parts) >= 4:
+                        protocol = parts[0]
+                        technology = parts[1]
+                        tag_id = parts[2]
                         
                         # Extract message from quotes
                         message = ""
-                        if len(parts) > 4:
-                            msg_part = parts[4]
+                        if len(parts) > 3:
+                            msg_part = parts[3]
                             if msg_part.startswith('"') and msg_part.endswith('"'):
                                 message = msg_part[1:-1]  # Remove quotes
                             else:
                                 message = msg_part
                         
                         tag = PicoNFCTag(
-                            tag_number=tag_number,
+                            tag_number=1,  # Single tag detection, always use 1
                             protocol=protocol,
                             technology=technology,
                             tag_id=tag_id,
@@ -245,8 +277,9 @@ class PicoNFCReader:
         if not self._initialized:
             raise NFCError("NFC reader not initialized")
         
-        # Poll for a single tag
-        response = self._send_command("POLL", timeout=timeout + 5.0)
+        # Use timed polling instead of infinite polling
+        command = f"POLL:{int(timeout)}"  # POLL:10 format
+        response = self._send_command(command, timeout=timeout + 5.0)
         if not response:
             return None
         
@@ -318,10 +351,21 @@ class PicoNFCReader:
         if not text:
             return False
         
-        command = f"WRITE:{text}"
-        response = self._send_command(command, timeout=15.0)
+        # First, make sure no polling is active by sending ENDPOLL
+        logger.info("Ensuring no active polling before write")
+        self._send_command("ENDPOLL", timeout=2.0)
         
-        return response == "OK:WRITE_SUCCESS"
+        # Small delay to let Arduino process the ENDPOLL
+        time.sleep(0.5)
+        
+        command = f"WRITE:{text}"
+        logger.info(f"Sending write command: {command}")
+        response = self._send_command(command, timeout=15.0)
+        logger.info(f"Write response: {repr(response)}")
+        
+        success = response and "OK:WRITE_SUCCESS" in response
+        logger.info(f"Write result: {success}")
+        return success
     
     def get_tag_info(self) -> Optional[Dict[str, Any]]:
         """Get information about the first detected tag"""

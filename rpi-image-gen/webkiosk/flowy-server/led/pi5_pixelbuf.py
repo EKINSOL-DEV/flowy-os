@@ -7,7 +7,7 @@ from pixelbuf_lite import PixelBuf
 from adafruit_raspberry_pi5_neopixel_write import neopixel_write
 
 # Default configuration
-DEFAULT_PIN = board.USB_DM
+DEFAULT_PIN = board.D8
 DEFAULT_NUM_PIXELS = 5
 DEFAULT_BYTEORDER = "RGB"
 

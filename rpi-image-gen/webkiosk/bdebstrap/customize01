@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# NOTE: Packages are now defined in webkiosk/meta/*.yaml files and referenced 
+# NOTE: Packages are now defined in webkiosk/flowy/*.yaml files and referenced 
 # in webkiosk/profile/flowy-kiosk instead of being installed here manually
 
 # Create flowy directory
@@ -22,7 +22,7 @@ chroot $1 $PYTHON_DIR/pip install -r $SERVER_DIR/pyreqs.txt
 KIOSK_APP="/usr/bin/chromium-browser http://localhost:8080/ --kiosk --noerrdialogs --disable-infobars --no-first-run --ozone-platform=wayland --enable-features=OverlayScrollbar --start-maximized --force-device-scale-factor=1.0 --disable-features=TranslateUI"
 
 SYS_DIR="$1/etc/systemd/system"
-for service in kiosk kioskserver wifiserver ledserver; do
+for service in kiosk kioskserver wifiserver ledserver nfcserver; do
    case $service in
       kiosk)
          sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
@@ -52,20 +52,16 @@ for service in kiosk kioskserver wifiserver ledserver; do
          sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
             ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
             ;;
+      nfcserver)
+         sed -e "s|<SERVER_DIR>|$SERVER_DIR|g" \
+             -e "s|<PYTHON_EXEC>|$PYTHON_DIR/python|g" \
+            ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
+            ;;
    esac
 
    # Enable the service
    $BDEBSTRAP_HOOKS/enable-units "$1" flowy-$service
 done
-     # nfcserver)
-      #   sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
-      #       -e "s|<SERVER_DIR>|$SERVER_DIR/nfc|g" \
-      #       -e "s|<PYTHON_EXEC>|$PYTHON_DIR/python|g" \
-      #      ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
-      #      ;;
-      # nfc-init)
-      #   cp ../services/$service.service.tpl $SYS_DIR/flowy-$service.service
-      #      ;;
 
 # Install flowy protocol handler
 cp ../flowy-protocol-handler.sh "$1/usr/local/bin/flowy-protocol-handler.sh"

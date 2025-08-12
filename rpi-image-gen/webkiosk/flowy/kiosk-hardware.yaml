@@ -10,4 +10,5 @@ mmdebstrap:
     - libgpiod-dev
     - libgpiod2
     - python3-libgpiod
+    - python3-gpiozero
     - gpiod
