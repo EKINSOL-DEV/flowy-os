@@ -1,0 +1,9 @@
+#!/bin/sh
+# Rotate DSI-1 output 90 degrees
+wlr-randr --output DSI-1 --transform 90 &
+
+# Start kiosk app on DSI
+gtk-launch flowy-app &
+
+# Optionally start Chromium on HDMI
+# chromium --ozone-platform-hint=wayland &

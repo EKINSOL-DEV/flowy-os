@@ -3,7 +3,8 @@ name: kiosk-base
 mmdebstrap:
   packages:
     - git
-    - cage
+    - libgtk-3-bin
+    - labwc
     - chromium
     - python-is-python3
     - python3-pip

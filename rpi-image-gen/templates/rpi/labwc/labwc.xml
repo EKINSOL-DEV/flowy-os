@@ -1,0 +1,15 @@
+<labwc_config>
+  <rules>
+    <rule>
+      <!-- Match by Wayland app_id (from your .desktop file) -->
+      <match>
+        <app_id>flowy-app</app_id>
+      </match>
+      <actions>
+        <move-to-output>DSI-1</move-to-output> <!-- replace with your DSI name -->
+        <fullscreen/>
+        <undecorate/>
+      </actions>
+    </rule>
+  </rules>
+</labwc_config>
