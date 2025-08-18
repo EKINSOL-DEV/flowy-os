@@ -1,0 +1,26 @@
+# Flowy kiosk system - minimal version with reduced base system
+
+# Minimal Debian base system (smaller footprint)
+debian/bookworm/arm64/base-slim
+rpi/debian/bookworm/apt
+rpi/misc-utils
+rpi/base/essential
+rpi/boot-firmware
+rpi/arm64/linux-image-v8
+rpi/user-credentials
+rpi/misc-skel
+sys-apps/systemd-net-min
+sys-apps/fake-hwclock
+
+# Kiosk-specific packages - production without development tools
+flowy/kiosk-production
+flowy/kiosk-ui
+
+# Essential packages only
+app-misc/ca-certificates
+net-misc/openssh-server
+
+# Essential networking packages (missing from base-slim)
+sys-apps/iproute2
+net-misc/dhcp
+sys-apps/systemd-resolved

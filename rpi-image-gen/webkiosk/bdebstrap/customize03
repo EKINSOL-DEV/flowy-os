@@ -1,0 +1,34 @@
+#!/bin/sh
+
+# Post-installation cleanup for minimal builds
+# This runs after customize01 (pip installs) and customize02 (hardware setup)
+
+echo "========================================="
+echo "🧹 CUSTOMIZE03: POST-INSTALLATION CLEANUP"
+echo "Profile detected: ${IGconf_device_profile:-UNKNOWN}"
+echo "========================================="
+
+# Clean up build tools after pip installations (always)
+echo "🗑️  Removing build tools to save space..."
+
+# Remove build tools that were needed for pip installations
+chroot "$1" apt-get remove --purge -y \
+    build-essential \
+    python3-dev \
+    device-tree-compiler \
+    linux-headers-generic || true
+
+# Clean up package manager caches and orphaned packages
+chroot "$1" apt-get autoremove -y
+chroot "$1" apt-get autoclean
+chroot "$1" apt-get clean
+
+# Remove package lists to save more space
+rm -rf "$1/var/lib/apt/lists"/*
+
+# Clear pip cache
+find "$1" -name ".cache" -type d -exec rm -rf {} + 2>/dev/null || true
+
+echo "✅ Build tools and caches cleaned up"
+
+echo "Post-installation cleanup completed."

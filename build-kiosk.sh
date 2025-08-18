@@ -32,16 +32,11 @@ while [[ $# -gt 0 ]]; do
       BUILD_PROFILE="flowy-kiosk-minimal"
       shift
       ;;
-    --full-hardware)
-      BUILD_PROFILE="flowy-kiosk-full"
-      shift
-      ;;
     --help|-h)
-      echo "Usage: $0 [--build-nfc] [--pack-themes] [--minimal] [--full-hardware] [--help]"
+      echo "Usage: $0 [--build-nfc] [--pack-themes] [--minimal] [--help]"
       echo "  --build-nfc      Rebuild NFC libraries archive from submodule"
       echo "  --pack-themes    Pack Plymouth themes into archives"
-      echo "  --minimal        Build ultra-minimal kiosk image (reduced base system)"
-      echo "  --full-hardware  Build with full hardware development tools"
+      echo "  --minimal        Build minimal kiosk image (no Chromium, smaller base system)"
       echo "  --help           Show this help message"
       exit 0
       ;;
