@@ -1,1 +1,1 @@
-console=serial0,115200 console=tty1 root=ROOTDEV fsck.repair=yes rootwait video=DSI-2:800x1280M@60,panel_orientation=right_side_up,rotate=180 fbcon=rotate:3
+console=serial0,115200 console=tty1 root=ROOTDEV fsck.repair=yes rootwait video=DSI-2:800x1280M@60,panel_orientation=right_side_up,rotate=180
