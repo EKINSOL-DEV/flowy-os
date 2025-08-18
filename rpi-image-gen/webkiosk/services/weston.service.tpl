@@ -1,0 +1,76 @@
+[Unit]
+Description=Weston Wayland Compositor
+Documentation=man:weston(1) man:weston.ini(5)
+Documentation=http://wayland.freedesktop.org/
+
+# Wait for user sessions and Plymouth to finish
+Requires=systemd-user-sessions.service
+After=systemd-user-sessions.service
+After=plymouth-quit-wait.service
+
+# Ensure D-Bus is available
+Wants=dbus.socket
+After=dbus.socket
+
+# Part of graphical target
+Before=graphical.target
+
+# Prevent start on systems without virtual consoles
+ConditionPathExists=/dev/tty1
+
+# Conflict with getty on the TTY we're using
+Conflicts=getty@tty1.service
+After=getty@tty1.service
+
+[Service]
+# Requires systemd-notify.so Weston plugin - CRITICAL for proper startup
+Type=notify
+TimeoutStartSec=60
+# Enable watchdog for monitoring
+WatchdogSec=20
+
+# User configuration
+User=<KIOSK_USER>
+Group=<KIOSK_USER>
+WorkingDirectory=/home/<KIOSK_USER>
+
+# Runtime directory for Wayland socket
+RuntimeDirectory=weston
+RuntimeDirectoryMode=0700
+
+# Set up full user session required by Weston
+PAMName=login
+
+# Virtual terminal configuration
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+
+# I/O configuration
+StandardInput=tty-fail
+StandardOutput=journal
+StandardError=journal
+
+# User tracking with utmp
+UtmpIdentifier=tty1
+UtmpMode=user
+
+# Environment configuration
+Environment=XDG_SESSION_TYPE=wayland
+Environment=XDG_SESSION_CLASS=user
+Environment=XDG_RUNTIME_DIR=/run/weston
+# Wayland hint for Electron apps
+Environment=ELECTRON_OZONE_PLATFORM_HINT=wayland
+
+# Load systemd-notify module and configure for kiosk use
+ExecStart=/usr/bin/weston --modules=systemd-notify.so --config=/etc/xdg/weston/weston.ini
+
+# Restart policy
+Restart=on-failure
+RestartSec=5
+StartLimitBurst=3
+StartLimitInterval=30
+
+[Install]
+WantedBy=graphical.target

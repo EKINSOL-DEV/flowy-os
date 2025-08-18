@@ -1,0 +1,33 @@
+---
+name: kiosk-production
+mmdebstrap:
+  packages:
+    # Essential compositor (Weston, not labwc) 
+    - weston
+    # Essential system packages  
+    - git
+    - python-is-python3
+    - python3-pip
+    - python3.11-venv
+    - triggerhappy
+    - ntpdate
+    # Build tools needed for Python packages
+    - build-essential
+    - python3-dev
+    # Essential GUI dependencies for flowy-app
+    - libgtk-3-bin
+    - libnotify4
+    - libnss3
+    - xdg-utils
+    - libglib2.0-bin
+    # Essential networking dependencies
+    - libbluetooth3
+    - libmm-glib0
+    - libndp0
+    - libnm0
+    - libteamdctl0
+    - policykit-1
+    - libnl-3-200
+    - libnl-genl-3-200
+    - libnl-route-3-200
+    - libpcsclite1

@@ -1,6 +1,6 @@
 #!/bin/sh
-# Rotate DSI-1 output 90 degrees
-wlr-randr --output DSI-1 --transform 90 &
+# Rotate DSI-2 output 270 degrees (corrected display name)
+wlr-randr --output DSI-2 --transform 270 &
 
 # Start kiosk app on DSI
 gtk-launch flowy-app &

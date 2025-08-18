@@ -14,12 +14,8 @@ bash ./driver-scripts/raspi-config.sh "$1"
 # Enable NTP time synchronization service
 $BDEBSTRAP_HOOKS/enable-units "$1" systemd-timesyncd
 
-# Set up touch rotation to match display rotation (270 degrees)
-mkdir -p "$1/etc/udev/rules.d"
-cat > "$1/etc/udev/rules.d/99-waveshare-touch.rules" << 'EOF'
-# Touch rotation for 270 degree display rotation
-ENV{ID_INPUT_TOUCHSCREEN}=="1", ENV{LIBINPUT_CALIBRATION_MATRIX}="0 1 0 -1 0 1"
-EOF
+# Touch rotation now handled automatically by Weston display rotation
+# No manual calibration matrix needed
 
 echo "Hardware drivers and display configuration completed."
 

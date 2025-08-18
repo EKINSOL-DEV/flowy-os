@@ -34,14 +34,11 @@ fi
 # KIOSK_APP="/usr/bin/chromium-browser http://localhost:8080/ --kiosk --noerrdialogs --disable-infobars --no-first-run --ozone-platform=wayland --enable-features=OverlayScrollbar --start-maximized --force-device-scale-factor=1.0 --disable-features=TranslateUI"
 
 SYS_DIR="$1/etc/systemd/system"
-for service in kiosk kioskserver wifiserver ledserver nfcserver; do
+for service in weston kioskserver wifiserver ledserver nfcserver; do
    case $service in
-      kiosk)
-         # Commented out for flowy-app.deb installation
-         # sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
-         #     -e "s|<KIOSK_RUNDIR>|\/home\/$IGconf_device_user1|g" \
-         #     -e "s|<KIOSK_APP>|$KIOSK_APP|g" \
-         #    ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
+      weston)
+         sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
+            ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
          ;;
       kioskserver)
          sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
@@ -84,12 +81,11 @@ chmod +x "$1/usr/local/bin/flowy-protocol-handler.sh"
 mkdir -p "$1/usr/share/applications"
 cp ../flowy-protocol.desktop "$1/usr/share/applications/"
 
-# Configure labwc for the user
-USER_HOME="$1/home/$IGconf_device_user1"
-mkdir -p "$USER_HOME/.config/labwc"
-cp ../../templates/rpi/labwc/autostart "$USER_HOME/.config/labwc/autostart"
-cp ../../templates/rpi/labwc/labwc.xml "$USER_HOME/.config/labwc/labwc.xml"
-chroot $1 chown -R $IGconf_device_user1:$IGconf_device_user1 /home/$IGconf_device_user1/.config
+# labwc configuration removed - using Weston now
+
+# Configure Weston using template
+mkdir -p "$1/etc/xdg/weston"
+cp ../../templates/rpi/weston.ini "$1/etc/xdg/weston/weston.ini"
 
 # Configure Plymouth splash screen
 echo "Configuring Plymouth splash screen..."
@@ -120,3 +116,14 @@ fi
 
 # Update initramfs to include Plymouth
 chroot $1 update-initramfs -u
+
+# Fix TTY permissions for Weston seat management
+echo 'KERNEL=="tty[0-9]*", GROUP="tty", MODE="0660"' > $1/etc/udev/rules.d/99-tty-permissions.rules
+
+# Fix flowy-app desktop file path and add performance flags for Electron
+if [ -f $1/usr/share/applications/flowy-app.desktop ]; then
+    sed -i 's|Exec=/opt/flowy-app/flowy-app|Exec=/usr/lib/flowy-app/flowy-app --no-sandbox --disable-infobars --enable-features=OverlayScrollbar,TouchpadAndWheelScrollLatching,UseOzonePlatform --force-device-scale-factor=1.0 --disable-features=TranslateUI --disable-gpu-sandbox --enable-gpu-rasterization --ozone-platform-hint=wayland --ozone-platform=wayland --touch-events=enabled --enable-native-gpu-memory-buffers|' $1/usr/share/applications/flowy-app.desktop
+fi
+
+# Ensure systemd-logind is enabled for proper seat management
+chroot $1 systemctl enable systemd-logind

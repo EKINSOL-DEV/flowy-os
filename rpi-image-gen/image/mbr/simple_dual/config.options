@@ -1,6 +1,6 @@
 # Partition sizes
-boot_part_size=100%
-root_part_size=100%
+boot_part_size=150%
+root_part_size=200%
 
 # Root filesystem type
 rootfs_type=ext4
