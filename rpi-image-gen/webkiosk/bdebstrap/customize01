@@ -3,8 +3,8 @@
 # NOTE: Packages are now defined in webkiosk/flowy/*.yaml files and referenced 
 # in webkiosk/profile/flowy-kiosk instead of being installed here manually
 
-# Create flowy directory
-mkdir -p $1/flowy
+# Create flowy directory and logs
+mkdir -p $1/flowy/logs
 chroot $1 chown -R $IGconf_device_user1:$IGconf_device_user1 /flowy
 
 SERVER_DIR="/flowy/server"
@@ -18,23 +18,13 @@ PYTHON_DIR=$SERVER_DIR/.venv/bin
 
 chroot $1 $PYTHON_DIR/pip install -r $SERVER_DIR/pyreqs.txt
 
-# Install flowy-app.deb if available in output directory
-if [ -n "$FLOWY_OUTPUT_DIR" ] && [ -f "$FLOWY_OUTPUT_DIR/packages/flowy-app.deb" ]; then
-    echo "Installing flowy-app.deb..."
-    cp "$FLOWY_OUTPUT_DIR/packages/flowy-app.deb" "$1/tmp/"
-    chroot $1 dpkg -i /tmp/flowy-app.deb
-    rm "$1/tmp/flowy-app.deb"
-    echo "✅ Flowy app installed"
-else
-    echo "⚠️  flowy-app.deb not found in output packages directory"
-fi
-
 
 # Set up chromium arguments (commented out for flowy-app.deb installation)
 # KIOSK_APP="/usr/bin/chromium-browser http://localhost:8080/ --kiosk --noerrdialogs --disable-infobars --no-first-run --ozone-platform=wayland --enable-features=OverlayScrollbar --start-maximized --force-device-scale-factor=1.0 --disable-features=TranslateUI"
 
 SYS_DIR="$1/etc/systemd/system"
-for service in weston kioskserver wifiserver ledserver nfcserver; do
+# Use unified API instead of individual services
+for service in weston kioskserver unified-api; do
    case $service in
       weston)
          sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
@@ -65,6 +55,13 @@ for service in weston kioskserver wifiserver ledserver nfcserver; do
       nfcserver)
          sed -e "s|<SERVER_DIR>|$SERVER_DIR|g" \
              -e "s|<PYTHON_EXEC>|$PYTHON_DIR/python|g" \
+            ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
+            ;;
+      unified-api)
+         sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
+             -e "s|<SERVER_DIR>|$SERVER_DIR/unified-api|g" \
+             -e "s|<PYTHON_EXEC>|$PYTHON_DIR/python|g" \
+             -e "s|<PYTHON_DIR>|$PYTHON_DIR|g" \
             ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
             ;;
    esac

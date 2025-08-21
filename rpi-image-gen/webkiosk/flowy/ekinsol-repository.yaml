@@ -1,0 +1,21 @@
+---
+name: ekinsol-repository
+mmdebstrap:
+  architectures:
+    - arm64
+  mirrors:
+    - deb http://apt.funnpunn.com/apt stable main
+  setup-hooks:
+    - mkdir -p $1/usr/share/keyrings/
+    - curl -fsSL http://apt.funnpunn.com/apt/flowy-apt-key.gpg -o $1/usr/share/keyrings/flowy.asc
+    - chmod a+r $1/usr/share/keyrings/flowy.asc
+    - cp -p $1/usr/share/keyrings/flowy.asc $IGconf_sys_apt_keydir
+  packages:
+    - flowy-app
+  customize-hooks:
+    - mkdir -p $1/etc/apt/sources.list.d
+    - |-
+      cat <<- EOF > $1/etc/apt/sources.list.d/ekinsol.list
+      deb [arch=arm64 signed-by=/usr/share/keyrings/flowy.asc] http://apt.funnpunn.com/apt stable main
+      EOF
+    - sed -i '/apt\.funnpunn\.com/d' $1/etc/apt/sources.list

@@ -18,6 +18,9 @@ flowy/kiosk-development
 flowy/kiosk-hardware  
 flowy/kiosk-ui
 
+# Ekinsol repository with flowy-app
+flowy/ekinsol-repository
+
 # Additional standard packages
 app-misc/ca-certificates
 net-misc/openssh-server
