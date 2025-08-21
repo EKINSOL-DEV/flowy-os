@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 
 # Ensure cogs package is importable
 COGS_PATH = Path(__file__).parent / "cogs"
@@ -43,6 +44,15 @@ def create_app() -> FastAPI:
     )
 
     load_cogs(app)
+    
+    # Serve NFC test page
+    @app.get("/nfc-test", response_class=HTMLResponse)
+    async def nfc_websocket_test():
+        static_file = Path(__file__).parent / "static" / "nfc_websocket_test.html"
+        if static_file.exists():
+            return HTMLResponse(content=static_file.read_text())
+        return HTMLResponse(content="<h1>Test page not found</h1>", status_code=404)
+    
     return app
 
 app = create_app()

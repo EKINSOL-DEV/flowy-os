@@ -59,7 +59,7 @@ for service in weston kioskserver unified-api; do
             ;;
       unified-api)
          sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
-             -e "s|<SERVER_DIR>|$SERVER_DIR/unified-api|g" \
+             -e "s|<SERVER_DIR>|$SERVER_DIR/api|g" \
              -e "s|<PYTHON_EXEC>|$PYTHON_DIR/python|g" \
              -e "s|<PYTHON_DIR>|$PYTHON_DIR|g" \
             ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
