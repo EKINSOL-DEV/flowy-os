@@ -2,7 +2,8 @@
 
 # Post-installation cleanup for minimal builds
 # This runs after customize01 (pip installs) and customize02 (hardware setup)
-
+# TODO: There is way to do cleanup which we haven't figured out yet
+ 
 echo "========================================="
 echo "🧹 CUSTOMIZE03: POST-INSTALLATION CLEANUP"
 echo "Profile detected: ${IGconf_device_profile:-UNKNOWN}"

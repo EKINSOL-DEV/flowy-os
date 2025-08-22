@@ -36,7 +36,7 @@ for service in weston kioskserver unified-api; do
              -e "s|<PYTHON_EXEC>|$PYTHON_DIR/python|g" \
             ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
             ;;
-      wifiserver)
+      wifiserver) # TODO: remove this service
          sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
              -e "s|<SERVER_DIR>|$SERVER_DIR/wifi|g" \
              -e "s|<PYTHON_EXEC>|$PYTHON_DIR/python|g" \
@@ -48,11 +48,11 @@ for service in weston kioskserver unified-api; do
              -e "s|<PYTHON_EXEC>|$PYTHON_DIR/python|g" \
             ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
             ;;
-      display-rotation)
+      display-rotation) # TODO: remove this service
          sed -e "s|<KIOSK_USER>|$IGconf_device_user1|g" \
             ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
             ;;
-      nfcserver)
+      nfcserver) # TODO: remove this service
          sed -e "s|<SERVER_DIR>|$SERVER_DIR|g" \
              -e "s|<PYTHON_EXEC>|$PYTHON_DIR/python|g" \
             ../services/$service.service.tpl > $SYS_DIR/flowy-$service.service
