@@ -12,3 +12,4 @@ rpi-image-gen/postrun.sh
 rpi-image-gen/SKIP
 rpi-image-gen/SKIP_IMAGES
 .pc
+.DS_Store

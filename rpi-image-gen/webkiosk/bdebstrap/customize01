@@ -124,3 +124,11 @@ fi
 
 # Ensure systemd-logind is enabled for proper seat management
 chroot $1 systemctl enable systemd-logind
+
+# Install root filesystem expansion service (runs once on first boot)
+cp ../scripts/expand-rootfs.sh "$1/usr/local/bin/expand-rootfs.sh"
+chmod +x "$1/usr/local/bin/expand-rootfs.sh"
+cp ../services/expand-rootfs.service.tpl $SYS_DIR/expand-rootfs.service
+mkdir -p "$1/var/lib/flowy"
+touch "$1/var/lib/flowy/.expand-rootfs"
+$BDEBSTRAP_HOOKS/enable-units "$1" expand-rootfs

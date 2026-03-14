@@ -31,3 +31,5 @@ mmdebstrap:
     - libnl-genl-3-200
     - libnl-route-3-200
     - libpcsclite1
+    # Root filesystem expansion on first boot
+    - cloud-guest-utils
