@@ -22,7 +22,7 @@ if str(COGS_PATH.parent) not in sys.path:
 
 def load_cogs(app: FastAPI):
     package_name = "cogs"
-    package = importlib.import_module(package_name)
+    importlib.import_module(package_name)
     for m in pkgutil.iter_modules([str(COGS_PATH)]):
         name = m.name
         if not name.endswith("_cog"):
@@ -66,4 +66,5 @@ app = create_app()
 if __name__ == "__main__":
     import uvicorn, os
     port = int(os.getenv("PORT", "10000"))
-    uvicorn.run("main_api:app", host="0.0.0.0", port=port, reload=os.getenv("ENVIRONMENT")=="development", log_level="debug")
+    host = os.getenv("HOST", "0.0.0.0")  # noqa: S104 — intentional for device LAN access
+    uvicorn.run("main_api:app", host=host, port=port, reload=os.getenv("ENVIRONMENT")=="development", log_level="debug")
