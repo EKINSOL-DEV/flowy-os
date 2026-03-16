@@ -54,13 +54,13 @@ def create_app() -> FastAPI:
             return HTMLResponse(content=static_file.read_text())
         return HTMLResponse(content="<h1>Test page not found</h1>", status_code=404)
 
-    # Serve Companion PWA
-    companion_dir = Path(__file__).parent / "static" / "companion"
+    # Serve Companion PWA (source lives in flowy-app repo, deployed to device)
+    import os as _os
+    companion_dir = Path(_os.getenv("FLOWY_COMPANION_DIR", "/opt/flowy/companion"))
     if companion_dir.exists():
         app.mount("/companion", StaticFiles(directory=str(companion_dir), html=True), name="companion")
 
     # Serve uploaded photos
-    import os as _os
     photos_dir = Path(_os.getenv("FLOWY_PHOTOS_DIR", "/flowy/photos"))
     if photos_dir.exists():
         app.mount("/photos-static", StaticFiles(directory=str(photos_dir)), name="photos-static")
