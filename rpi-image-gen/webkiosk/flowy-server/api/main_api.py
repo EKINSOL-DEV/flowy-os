@@ -59,6 +59,12 @@ def create_app() -> FastAPI:
     if companion_dir.exists():
         app.mount("/companion", StaticFiles(directory=str(companion_dir), html=True), name="companion")
 
+    # Serve uploaded photos
+    import os as _os
+    photos_dir = Path(_os.getenv("FLOWY_PHOTOS_DIR", "/flowy/photos"))
+    if photos_dir.exists():
+        app.mount("/photos-static", StaticFiles(directory=str(photos_dir)), name="photos-static")
+
     return app
 
 app = create_app()

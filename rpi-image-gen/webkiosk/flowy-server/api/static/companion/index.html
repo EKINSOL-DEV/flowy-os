@@ -27,7 +27,7 @@
       padding-bottom: 32px;
     }
 
-    /* Header */
+    /* ── Header ── */
     .header {
       display: flex;
       align-items: center;
@@ -36,341 +36,221 @@
       padding: 8px 0;
     }
 
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .logo {
-      font-size: 28px;
-      font-weight: 800;
-      color: #FF6B8A;
-      letter-spacing: -0.5px;
-    }
-
-    .logo-sub {
-      font-size: 13px;
-      font-weight: 500;
-      color: #7B6F99;
-    }
+    .logo { font-size: 28px; font-weight: 800; color: #FF6B8A; letter-spacing: -0.5px; }
+    .logo-sub { font-size: 13px; font-weight: 500; color: #7B6F99; }
 
     .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #ccc;
-      transition: background 0.3s;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #ccc; transition: background 0.3s;
     }
-
     .status-dot.online { background: #6DD4A8; }
     .status-dot.offline { background: #FF6B8A; }
 
     .device-status {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      color: #7B6F99;
-      font-weight: 500;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: #7B6F99; font-weight: 500;
     }
 
-    /* Cards */
-    .card {
-      background: #FFFFFF;
+    /* ── Menu Grid ── */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      padding-top: 8px;
+    }
+
+    .menu-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 28px 16px;
       border-radius: 20px;
-      padding: 20px;
+      border: none;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.15s;
+    }
+
+    .menu-card:active { transform: scale(0.95); }
+
+    .menu-card .icon-circle {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: rgba(255,255,255,0.7);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .menu-card .icon-circle svg { width: 26px; height: 26px; }
+
+    .menu-card .label {
+      font-size: 0.9rem; font-weight: 700; letter-spacing: 0.01em;
+    }
+
+    /* ── Section Views ── */
+    .section-view { display: none; }
+    .section-view.active { display: block; animation: fadeUp 0.25s ease-out; }
+
+    .section-header {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .back-btn {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: none; background: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(45, 38, 64, 0.08);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: #2D2640; flex-shrink: 0;
+    }
+
+    .back-btn:active { background: #F5F0FF; transform: scale(0.92); }
+    .back-btn svg { width: 20px; height: 20px; }
+
+    .section-title {
+      font-size: 1.3rem; font-weight: 700; color: #2D2640;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: #FFFFFF; border-radius: 20px; padding: 20px;
       margin-bottom: 16px;
       box-shadow: 0 2px 12px rgba(45, 38, 64, 0.06);
       border: 1px solid #E8E0F5;
     }
 
     .card-title {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      color: #7B6F99;
-      margin-bottom: 14px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.2px; color: #7B6F99; margin-bottom: 14px;
     }
 
-    /* Now Playing */
-    .now-playing-content {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
+    /* ── Now Playing ── */
+    .now-playing-content { display: flex; align-items: center; gap: 16px; }
 
     .album-art {
-      width: 72px;
-      height: 72px;
-      border-radius: 14px;
+      width: 72px; height: 72px; border-radius: 14px;
       background: linear-gradient(135deg, #E8E0F5 0%, #F5F0FF 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; overflow: hidden;
     }
+    .album-art svg { width: 32px; height: 32px; opacity: 0.4; }
+    .album-art img { width: 100%; height: 100%; object-fit: cover; }
 
-    .album-art svg {
-      width: 32px;
-      height: 32px;
-      opacity: 0.4;
-    }
+    .track-info { flex: 1; min-width: 0; }
+    .track-title { font-size: 16px; font-weight: 700; color: #2D2640; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-artist { font-size: 13px; color: #7B6F99; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-idle { font-size: 15px; color: #7B6F99; text-align: center; padding: 12px 0; }
 
-    .album-art img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .track-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .track-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: #2D2640;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .track-artist {
-      font-size: 13px;
-      color: #7B6F99;
-      margin-top: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .track-idle {
-      font-size: 15px;
-      color: #7B6F99;
-      text-align: center;
-      padding: 12px 0;
-    }
-
-    .music-controls {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 18px;
-    }
+    .music-controls { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 18px; }
 
     .ctrl-btn {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      border: none;
-      background: #F5F0FF;
-      color: #2D2640;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.15s;
-      -webkit-tap-highlight-color: transparent;
+      width: 48px; height: 48px; border-radius: 50%; border: none;
+      background: #F5F0FF; color: #2D2640;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.15s;
     }
-
-    .ctrl-btn:active {
-      transform: scale(0.92);
-      background: #E8E0F5;
-    }
-
-    .ctrl-btn svg {
-      width: 22px;
-      height: 22px;
-    }
+    .ctrl-btn:active { transform: scale(0.92); background: #E8E0F5; }
+    .ctrl-btn svg { width: 22px; height: 22px; }
 
     .ctrl-btn.play-pause {
-      width: 60px;
-      height: 60px;
-      background: #FF6B8A;
-      color: #fff;
+      width: 60px; height: 60px; background: #FF6B8A; color: #fff;
       box-shadow: 0 4px 16px rgba(255, 107, 138, 0.35);
     }
+    .ctrl-btn.play-pause:active { background: #e8567a; }
+    .ctrl-btn.play-pause svg { width: 26px; height: 26px; }
 
-    .ctrl-btn.play-pause:active {
-      background: #e8567a;
-    }
+    .progress-bar { margin-top: 16px; height: 4px; background: #E8E0F5; border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #FF6B8A; border-radius: 2px; transition: width 0.5s linear; width: 0%; }
+    .progress-times { display: flex; justify-content: space-between; font-size: 11px; color: #7B6F99; margin-top: 4px; }
 
-    .ctrl-btn.play-pause svg {
-      width: 26px;
-      height: 26px;
-    }
+    /* ── WiFi ── */
+    .wifi-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
+    .wifi-row + .wifi-row { border-top: 1px solid #F5F0FF; }
+    .wifi-label { font-size: 13px; color: #7B6F99; font-weight: 500; }
+    .wifi-value { font-size: 14px; font-weight: 600; color: #2D2640; text-align: right; max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    .progress-bar {
-      margin-top: 16px;
-      height: 4px;
-      background: #E8E0F5;
-      border-radius: 2px;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: #FF6B8A;
-      border-radius: 2px;
-      transition: width 0.5s linear;
-      width: 0%;
-    }
-
-    .progress-times {
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      color: #7B6F99;
-      margin-top: 4px;
-    }
-
-    /* WiFi Status */
-    .wifi-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 0;
-    }
-
-    .wifi-row + .wifi-row {
-      border-top: 1px solid #F5F0FF;
-    }
-
-    .wifi-label {
-      font-size: 13px;
-      color: #7B6F99;
-      font-weight: 500;
-    }
-
-    .wifi-value {
-      font-size: 14px;
-      font-weight: 600;
-      color: #2D2640;
-      text-align: right;
-      max-width: 60%;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .signal-bars {
-      display: inline-flex;
-      align-items: flex-end;
-      gap: 2px;
-      height: 16px;
-      margin-left: 6px;
-      vertical-align: middle;
-    }
-
-    .signal-bar {
-      width: 4px;
-      border-radius: 1px;
-      background: #E8E0F5;
-      transition: background 0.3s;
-    }
-
+    .signal-bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 16px; margin-left: 6px; vertical-align: middle; }
+    .signal-bar { width: 4px; border-radius: 1px; background: #E8E0F5; transition: background 0.3s; }
     .signal-bar.active { background: #6DD4A8; }
 
-    /* Device Info */
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
+    /* ── Device Info ── */
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .info-item { background: #F5F0FF; border-radius: 14px; padding: 14px; }
+    .info-item.full-width { grid-column: 1 / -1; }
+    .info-label { font-size: 11px; font-weight: 600; color: #7B6F99; text-transform: uppercase; letter-spacing: 0.5px; }
+    .info-value { font-size: 16px; font-weight: 700; color: #2D2640; margin-top: 4px; word-break: break-all; }
+
+    /* ── Photos ── */
+    .photos-toolbar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
+
+    .photos-toolbar select {
+      flex: 1; padding: 10px 12px; border-radius: 12px;
+      border: 1px solid #E8E0F5; background: #F5F0FF;
+      font-size: 14px; font-weight: 600; color: #2D2640; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237B6F99' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
     }
 
-    .info-item {
-      background: #F5F0FF;
-      border-radius: 14px;
-      padding: 14px;
+    .photos-btn {
+      padding: 10px 16px; border-radius: 12px; border: none;
+      background: #FF6B8A; color: #fff; font-size: 13px; font-weight: 600;
+      cursor: pointer; white-space: nowrap; transition: background 0.15s;
     }
+    .photos-btn:active { background: #e8567a; }
+    .photos-btn.outline { background: transparent; border: 1px solid #E8E0F5; color: #2D2640; }
+    .photos-btn.outline:active { background: #F5F0FF; }
 
-    .info-item.full-width {
-      grid-column: 1 / -1;
+    .photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+
+    .photo-thumb { aspect-ratio: 1; border-radius: 10px; overflow: hidden; position: relative; background: #E8E0F5; }
+    .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-thumb .delete-btn {
+      position: absolute; top: 4px; right: 4px; width: 24px; height: 24px;
+      border-radius: 50%; background: rgba(0,0,0,0.6); color: white;
+      border: none; font-size: 14px; display: none; align-items: center;
+      justify-content: center; cursor: pointer;
     }
+    .photo-thumb:hover .delete-btn, .photo-thumb:active .delete-btn { display: flex; }
 
-    .info-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: #7B6F99;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+    .upload-area {
+      border: 2px dashed #E8E0F5; border-radius: 14px; padding: 20px;
+      text-align: center; margin-top: 12px; cursor: pointer; transition: border-color 0.2s;
     }
+    .upload-area:active { border-color: #FF6B8A; }
+    .upload-area p { font-size: 13px; color: #7B6F99; }
 
-    .info-value {
-      font-size: 16px;
-      font-weight: 700;
-      color: #2D2640;
-      margin-top: 4px;
-      word-break: break-all;
-    }
+    .upload-progress { margin-top: 8px; height: 4px; background: #E8E0F5; border-radius: 2px; overflow: hidden; display: none; }
+    .upload-progress .fill { height: 100%; background: #FF6B8A; border-radius: 2px; width: 0%; transition: width 0.3s; }
 
-    /* Alarms placeholder */
-    .alarms-placeholder {
-      text-align: center;
-      padding: 20px 12px;
-    }
+    .new-album-form { display: none; gap: 8px; margin-bottom: 10px; }
+    .new-album-form.active { display: flex; }
+    .new-album-form input { flex: 1; padding: 8px 12px; border-radius: 10px; border: 1px solid #E8E0F5; font-size: 14px; color: #2D2640; }
 
-    .alarms-placeholder svg {
-      width: 48px;
-      height: 48px;
-      color: #E8E0F5;
-      margin-bottom: 12px;
-    }
+    /* ── Alarms ── */
+    .alarms-placeholder { text-align: center; padding: 20px 12px; }
+    .alarms-placeholder svg { width: 48px; height: 48px; color: #E8E0F5; margin-bottom: 12px; }
+    .alarms-placeholder p { font-size: 14px; color: #7B6F99; line-height: 1.5; }
 
-    .alarms-placeholder p {
-      font-size: 14px;
-      color: #7B6F99;
-      line-height: 1.5;
-    }
-
-    /* Refresh indicator */
+    /* ── Misc ── */
     .refresh-pulse {
-      display: inline-block;
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #FF6B8A;
-      margin-left: 8px;
-      opacity: 0;
-      transition: opacity 0.2s;
+      display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+      background: #FF6B8A; margin-left: 8px; opacity: 0; transition: opacity 0.2s;
     }
+    .refresh-pulse.active { opacity: 1; animation: pulse 0.6s ease-out; }
 
-    .refresh-pulse.active {
-      opacity: 1;
-      animation: pulse 0.6s ease-out;
-    }
+    @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
 
-    @keyframes pulse {
-      0% { transform: scale(1); opacity: 1; }
-      100% { transform: scale(2); opacity: 0; }
-    }
-
-    /* Loading skeleton */
     .skeleton {
       background: linear-gradient(90deg, #E8E0F5 25%, #F5F0FF 50%, #E8E0F5 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-      border-radius: 6px;
-      height: 16px;
+      background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 6px; height: 16px;
     }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-    @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-
-    /* Pull to refresh hint */
-    .last-updated {
-      text-align: center;
-      font-size: 11px;
-      color: #B8ADCC;
-      margin-top: 8px;
-    }
+    .last-updated { text-align: center; font-size: 11px; color: #B8ADCC; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -378,11 +258,9 @@
 
     <!-- Header -->
     <div class="header">
-      <div class="header-left">
-        <div>
-          <div class="logo">Flowy</div>
-          <div class="logo-sub">Companion</div>
-        </div>
+      <div>
+        <div class="logo">Flowy</div>
+        <div class="logo-sub">Companion</div>
       </div>
       <div class="device-status">
         <span id="device-name">flowpi</span>
@@ -390,68 +268,194 @@
       </div>
     </div>
 
-    <!-- Now Playing -->
-    <div class="card" id="music-card">
-      <div class="card-title">Now Playing <span class="refresh-pulse" id="music-pulse"></span></div>
-      <div id="music-content">
-        <div class="track-idle">Connecting...</div>
+    <!-- ═══════ MENU VIEW ═══════ -->
+    <div id="menu-view">
+      <!-- Mini player on home screen -->
+      <div class="card" id="mini-player" style="margin-bottom:20px">
+        <div id="mini-player-content">
+          <div class="track-idle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#B8ADCC" stroke-width="1.5" style="width:32px;height:32px;margin:0 auto 8px;display:block">
+              <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+            </svg>
+            No music playing
+          </div>
+        </div>
       </div>
+
+      <div class="menu-grid">
+        <button class="menu-card" onclick="showSection('section-music')" style="background:#E2F8EE">
+          <div class="icon-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#4CAF7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+            </svg>
+          </div>
+          <span class="label" style="color:#4CAF7D">Now Playing</span>
+        </button>
+
+        <button class="menu-card" onclick="showSection('section-wifi')" style="background:#E0EFFF">
+          <div class="icon-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#4A90D9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/>
+            </svg>
+          </div>
+          <span class="label" style="color:#4A90D9">WiFi</span>
+        </button>
+
+        <button class="menu-card" onclick="showSection('section-photos')" style="background:#E8F4FF">
+          <div class="icon-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#5B9BD5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+          <span class="label" style="color:#5B9BD5">Photos</span>
+        </button>
+
+        <button class="menu-card" onclick="showSection('section-alarms')" style="background:#FFF0D6">
+          <div class="icon-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#E8A84C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </div>
+          <span class="label" style="color:#E8A84C">Alarms</span>
+        </button>
+
+        <button class="menu-card" onclick="showSection('section-device')" style="background:#E8E0F5">
+          <div class="icon-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#7B6F99" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+          </div>
+          <span class="label" style="color:#7B6F99">Device</span>
+        </button>
+      </div>
+      <div class="last-updated" id="last-updated"></div>
     </div>
 
-    <!-- WiFi Status -->
-    <div class="card" id="wifi-card">
-      <div class="card-title">WiFi <span class="refresh-pulse" id="wifi-pulse"></span></div>
-      <div id="wifi-content">
-        <div class="wifi-row">
-          <span class="wifi-label">Network</span>
-          <span class="wifi-value"><div class="skeleton" style="width:100px;display:inline-block"></div></span>
+    <!-- ═══════ SECTION: Now Playing ═══════ -->
+    <div id="section-music" class="section-view">
+      <div class="section-header">
+        <button class="back-btn" onclick="showMenu()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span class="section-title">Now Playing</span>
+        <span class="refresh-pulse" id="music-pulse"></span>
+      </div>
+      <div class="card" id="music-card">
+        <div id="music-content">
+          <div class="track-idle">Connecting...</div>
         </div>
       </div>
     </div>
 
-    <!-- Alarms -->
-    <div class="card" id="alarms-card">
-      <div class="card-title">Alarms</div>
-      <div class="alarms-placeholder">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="13" r="8"/>
-          <path d="M12 9v4l2 2"/>
-          <path d="M5 3L2 6"/>
-          <path d="M22 6l-3-3"/>
-        </svg>
-        <p>Alarms are managed on your Flowy device.<br>Tap the screen on your Flowy to set alarms.</p>
+    <!-- ═══════ SECTION: WiFi ═══════ -->
+    <div id="section-wifi" class="section-view">
+      <div class="section-header">
+        <button class="back-btn" onclick="showMenu()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span class="section-title">WiFi</span>
+        <span class="refresh-pulse" id="wifi-pulse"></span>
       </div>
-    </div>
-
-    <!-- Device Info -->
-    <div class="card" id="device-card">
-      <div class="card-title">Device <span class="refresh-pulse" id="device-pulse"></span></div>
-      <div class="info-grid" id="device-content">
-        <div class="info-item">
-          <div class="info-label">IP Address</div>
-          <div class="info-value" id="device-ip">--</div>
-        </div>
-        <div class="info-item">
-          <div class="info-label">Interface</div>
-          <div class="info-value" id="device-iface">wlan0</div>
-        </div>
-        <div class="info-item full-width">
-          <div class="info-label">MAC Address</div>
-          <div class="info-value" id="device-mac">--</div>
+      <div class="card" id="wifi-card">
+        <div id="wifi-content">
+          <div class="wifi-row">
+            <span class="wifi-label">Network</span>
+            <span class="wifi-value"><div class="skeleton" style="width:100px;display:inline-block"></div></span>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="last-updated" id="last-updated"></div>
+    <!-- ═══════ SECTION: Photos ═══════ -->
+    <div id="section-photos" class="section-view">
+      <div class="section-header">
+        <button class="back-btn" onclick="showMenu()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span class="section-title">Photos</span>
+        <span class="refresh-pulse" id="photos-pulse"></span>
+      </div>
+      <div class="card">
+        <div class="photos-toolbar">
+          <select id="album-select" onchange="onAlbumChange()">
+            <option value="">Select album...</option>
+          </select>
+          <button class="photos-btn outline" onclick="showNewAlbumForm()">+ Album</button>
+          <button class="photos-btn outline" id="delete-album-btn" onclick="deleteCurrentAlbum()" style="display:none;color:#DC3545;border-color:#DC3545">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:middle"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+        <div class="new-album-form" id="new-album-form">
+          <input type="text" id="new-album-name" placeholder="Album name">
+          <button class="photos-btn" onclick="createNewAlbum()">Create</button>
+          <button class="photos-btn outline" onclick="hideNewAlbumForm()">Cancel</button>
+        </div>
+        <div id="upload-area" class="upload-area" onclick="document.getElementById('photo-input').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#B8ADCC" stroke-width="1.5" style="width:32px;height:32px;margin:0 auto 8px;display:block">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <p>Tap to upload photos</p>
+          <input type="file" id="photo-input" accept="image/*" multiple hidden onchange="handlePhotoUpload(event)">
+        </div>
+        <div class="upload-progress" id="upload-progress"><div class="fill" id="upload-fill"></div></div>
+        <div class="photos-grid" id="photos-grid"></div>
+      </div>
+    </div>
+
+    <!-- ═══════ SECTION: Alarms ═══════ -->
+    <div id="section-alarms" class="section-view">
+      <div class="section-header">
+        <button class="back-btn" onclick="showMenu()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span class="section-title">Alarms</span>
+      </div>
+      <div class="card">
+        <div class="alarms-placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3L2 6"/><path d="M22 6l-3-3"/>
+          </svg>
+          <p>Alarms are managed on your Flowy device.<br>Tap the screen on your Flowy to set alarms.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ SECTION: Device ═══════ -->
+    <div id="section-device" class="section-view">
+      <div class="section-header">
+        <button class="back-btn" onclick="showMenu()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span class="section-title">Device</span>
+        <span class="refresh-pulse" id="device-pulse"></span>
+      </div>
+      <div class="card">
+        <div class="info-grid" id="device-content">
+          <div class="info-item">
+            <div class="info-label">IP Address</div>
+            <div class="info-value" id="device-ip">--</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Interface</div>
+            <div class="info-value" id="device-iface">wlan0</div>
+          </div>
+          <div class="info-item full-width">
+            <div class="info-label">MAC Address</div>
+            <div class="info-value" id="device-mac">--</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
   </div>
 
   <script>
-    // State
+    // ── State ──
     let musicState = { playing: false };
     let deviceOnline = false;
 
-    // Helpers
+    // ── Helpers ──
     function $(id) { return document.getElementById(id); }
 
     function flashPulse(id) {
@@ -474,33 +478,83 @@
         const res = await fetch(path, { signal: AbortSignal.timeout(5000) });
         if (!res.ok) throw new Error(res.statusText);
         return await res.json();
-      } catch (e) {
-        return null;
-      }
+      } catch (e) { return null; }
     }
 
     async function apiPost(path) {
       try {
-        const res = await fetch(path, {
-          method: 'POST',
-          signal: AbortSignal.timeout(5000)
-        });
+        const res = await fetch(path, { method: 'POST', signal: AbortSignal.timeout(5000) });
         if (!res.ok) throw new Error(res.statusText);
         return await res.json();
-      } catch (e) {
-        return null;
-      }
+      } catch (e) { return null; }
     }
 
-    // --- Music ---
+    function escHtml(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    // ── Navigation ──
+    function showSection(sectionId) {
+      $('menu-view').style.display = 'none';
+      document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
+      $(sectionId).classList.add('active');
+    }
+
+    function showMenu() {
+      document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
+      $('menu-view').style.display = '';
+    }
+
+    // ── Music ──
+    function renderMiniPlayer(data) {
+      const el = $('mini-player-content');
+      if (!data || (!data.playing && !data.track_id)) {
+        el.innerHTML = `<div class="track-idle" style="padding:4px 0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#B8ADCC" stroke-width="1.5" style="width:24px;height:24px;margin:0 auto 6px;display:block">
+              <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+            </svg>No music playing</div>`;
+        return;
+      }
+      const title = data.title || data.track_id || 'Unknown';
+      const artist = data.artist || 'Spotify Connect';
+      const progress = (data.duration_ms > 0) ? Math.min(100, (data.progress_ms / data.duration_ms) * 100) : 0;
+      el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="album-art" style="width:48px;height:48px;border-radius:10px">
+            ${data.art_url
+              ? `<img src="${data.art_url}" alt="">`
+              : `<svg viewBox="0 0 24 24" fill="none" stroke="#B8ADCC" stroke-width="1.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div class="track-title" style="font-size:14px">${escHtml(title)}</div>
+            <div class="track-artist" style="font-size:12px">${escHtml(artist)}</div>
+          </div>
+          <div style="display:flex;gap:4px">
+            <button class="ctrl-btn" onclick="musicPrev()" style="width:36px;height:36px">
+              <svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            </button>
+            <button class="ctrl-btn play-pause" onclick="musicToggle()" style="width:42px;height:42px">
+              ${data.playing
+                ? '<svg viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px"><path d="M6 19h4V5H6zm8-14v14h4V5z"/></svg>'
+                : '<svg viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px"><path d="M8 5v14l11-7z"/></svg>'}
+            </button>
+            <button class="ctrl-btn" onclick="musicNext()" style="width:36px;height:36px">
+              <svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px"><path d="M6 18l8.5-6L6 6v12zm10-12v12h2V6z"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="progress-bar" style="margin-top:10px"><div class="progress-fill" style="width:${progress}%"></div></div>`;
+    }
+
     function renderMusic(data) {
       const el = $('music-content');
       if (!data || (!data.playing && !data.track_id)) {
         el.innerHTML = `
           <div class="track-idle">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#B8ADCC" stroke-width="1.5" style="width:32px;height:32px;margin-bottom:8px;display:block;margin:0 auto 8px">
-              <path d="M9 18V5l12-2v13"/>
-              <circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#B8ADCC" stroke-width="1.5" style="width:32px;height:32px;margin:0 auto 8px;display:block">
+              <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
             </svg>
             No music playing
           </div>`;
@@ -547,44 +601,25 @@
         </div>`;
     }
 
-    function escHtml(s) {
-      const d = document.createElement('div');
-      d.textContent = s;
-      return d.innerHTML;
-    }
-
     async function fetchMusic() {
       flashPulse('music-pulse');
       const data = await api('/music/status');
-      if (data) {
-        musicState = data;
-        deviceOnline = true;
-        renderMusic(data);
-      }
+      if (data) { musicState = data; deviceOnline = true; renderMusic(data); renderMiniPlayer(data); }
       updateStatusDot();
     }
 
     async function musicToggle() {
       const endpoint = musicState.playing ? '/music/pause' : '/music/play';
       await apiPost(endpoint);
-      // Optimistic update
       musicState.playing = !musicState.playing;
       renderMusic(musicState);
-      // Then refresh real state
       setTimeout(fetchMusic, 500);
     }
 
-    async function musicNext() {
-      await apiPost('/music/skip');
-      setTimeout(fetchMusic, 500);
-    }
+    async function musicNext() { await apiPost('/music/skip'); setTimeout(fetchMusic, 500); }
+    async function musicPrev() { await apiPost('/music/previous'); setTimeout(fetchMusic, 500); }
 
-    async function musicPrev() {
-      await apiPost('/music/previous');
-      setTimeout(fetchMusic, 500);
-    }
-
-    // --- WiFi ---
+    // ── WiFi ──
     function renderWifi(data) {
       const el = $('wifi-content');
       if (!data) {
@@ -597,8 +632,6 @@
       const signal = data.signal_strength || data.signal || data.signal_percent || 0;
       const mac = data.mac_address || data.mac || '--';
       const state = data.state || data.status || '--';
-
-      // Signal bars (4 bars)
       const signalNum = parseInt(signal) || 0;
       let bars = '';
       for (let i = 0; i < 4; i++) {
@@ -608,24 +641,11 @@
       }
 
       el.innerHTML = `
-        <div class="wifi-row">
-          <span class="wifi-label">Network</span>
-          <span class="wifi-value">${escHtml(ssid)} <span class="signal-bars">${bars}</span></span>
-        </div>
-        <div class="wifi-row">
-          <span class="wifi-label">IP Address</span>
-          <span class="wifi-value">${escHtml(ip)}</span>
-        </div>
-        <div class="wifi-row">
-          <span class="wifi-label">Signal</span>
-          <span class="wifi-value">${signalNum}%</span>
-        </div>
-        <div class="wifi-row">
-          <span class="wifi-label">Status</span>
-          <span class="wifi-value">${escHtml(state)}</span>
-        </div>`;
+        <div class="wifi-row"><span class="wifi-label">Network</span><span class="wifi-value">${escHtml(ssid)} <span class="signal-bars">${bars}</span></span></div>
+        <div class="wifi-row"><span class="wifi-label">IP Address</span><span class="wifi-value">${escHtml(ip)}</span></div>
+        <div class="wifi-row"><span class="wifi-label">Signal</span><span class="wifi-value">${signalNum}%</span></div>
+        <div class="wifi-row"><span class="wifi-label">Status</span><span class="wifi-value">${escHtml(state)}</span></div>`;
 
-      // Update device info section too
       $('device-ip').textContent = ip;
       $('device-mac').textContent = mac;
     }
@@ -633,45 +653,137 @@
     async function fetchWifi() {
       flashPulse('wifi-pulse');
       const data = await api('/wifi/interface?interface_name=wlan0');
-      if (data) {
-        deviceOnline = true;
-        renderWifi(data);
-      } else {
-        deviceOnline = false;
-        renderWifi(null);
-      }
+      if (data) { deviceOnline = true; renderWifi(data); }
+      else { deviceOnline = false; renderWifi(null); }
       updateStatusDot();
     }
 
-    // --- Device ---
+    // ── Device ──
     function updateStatusDot() {
-      const dot = $('status-dot');
-      dot.className = 'status-dot ' + (deviceOnline ? 'online' : 'offline');
+      $('status-dot').className = 'status-dot ' + (deviceOnline ? 'online' : 'offline');
     }
 
     function updateTimestamp() {
-      const now = new Date();
-      const t = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       $('last-updated').textContent = 'Last updated ' + t;
     }
 
-    // --- Init ---
+    // ── Photos ──
+    let currentAlbumId = null;
+    let albums = [];
+
+    async function fetchAlbums() {
+      flashPulse('photos-pulse');
+      const data = await api('/photos/albums');
+      if (!data) return;
+      albums = data;
+      const sel = $('album-select');
+      const prev = sel.value;
+      sel.innerHTML = '<option value="">Select album...</option>';
+      albums.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = a.name + ' (' + (a.photoCount || 0) + ')';
+        sel.appendChild(opt);
+      });
+      if (prev) sel.value = prev;
+    }
+
+    function onAlbumChange() {
+      const sel = $('album-select');
+      currentAlbumId = sel.value || null;
+      $('delete-album-btn').style.display = currentAlbumId ? '' : 'none';
+      if (currentAlbumId) fetchAlbumPhotos(currentAlbumId);
+      else $('photos-grid').innerHTML = '';
+    }
+
+    async function fetchAlbumPhotos(albumId) {
+      const data = await api('/photos/albums/' + albumId);
+      if (!data || !data.photos) { $('photos-grid').innerHTML = ''; return; }
+      const grid = $('photos-grid');
+      grid.innerHTML = '';
+      data.photos.forEach(photo => {
+        const div = document.createElement('div');
+        div.className = 'photo-thumb';
+        // Use picsum as placeholder; real device uses /photos-static/
+        const thumbSrc = photo.thumbnailFilename.startsWith('http')
+          ? photo.thumbnailFilename
+          : 'https://picsum.photos/seed/' + photo.id + '/200/200';
+        div.innerHTML = '<img src="' + thumbSrc + '" alt="" onerror="this.src=\'https://picsum.photos/seed/' + photo.id + '/200/200\'">'
+          + '<button class="delete-btn" onclick="deletePhoto(\'' + photo.id + '\')">&times;</button>';
+        grid.appendChild(div);
+      });
+    }
+
+    async function deletePhoto(photoId) {
+      await fetch('/photos/' + photoId, { method: 'DELETE', signal: AbortSignal.timeout(5000) });
+      if (currentAlbumId) fetchAlbumPhotos(currentAlbumId);
+      fetchAlbums();
+    }
+
+    async function deleteCurrentAlbum() {
+      if (!currentAlbumId) return;
+      const album = albums.find(a => a.id === currentAlbumId);
+      const name = album ? album.name : currentAlbumId;
+      if (!confirm('Delete album "' + name + '" and all its photos?')) return;
+      await fetch('/photos/albums/' + currentAlbumId, { method: 'DELETE', signal: AbortSignal.timeout(5000) });
+      currentAlbumId = null;
+      $('photos-grid').innerHTML = '';
+      $('delete-album-btn').style.display = 'none';
+      await fetchAlbums();
+      $('album-select').value = '';
+    }
+
+    function showNewAlbumForm() { $('new-album-form').classList.add('active'); $('new-album-name').focus(); }
+    function hideNewAlbumForm() { $('new-album-form').classList.remove('active'); $('new-album-name').value = ''; }
+
+    async function createNewAlbum() {
+      const name = $('new-album-name').value.trim();
+      if (!name) return;
+      await fetch('/photos/albums', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }), signal: AbortSignal.timeout(5000)
+      });
+      hideNewAlbumForm();
+      await fetchAlbums();
+      const sel = $('album-select');
+      if (albums.length) { sel.value = albums[albums.length - 1].id; onAlbumChange(); }
+    }
+
+    async function handlePhotoUpload(event) {
+      const files = event.target.files;
+      if (!files || !files.length) return;
+      if (!currentAlbumId) { alert('Please select or create an album first'); event.target.value = ''; return; }
+      const progress = $('upload-progress');
+      const fill = $('upload-fill');
+      progress.style.display = 'block';
+      for (let i = 0; i < files.length; i++) {
+        fill.style.width = Math.round(((i + 1) / files.length) * 100) + '%';
+        const fd = new FormData();
+        fd.append('file', files[i]);
+        try { await fetch('/photos/albums/' + currentAlbumId + '/upload', { method: 'POST', body: fd, signal: AbortSignal.timeout(30000) }); }
+        catch (e) { /* continue */ }
+      }
+      progress.style.display = 'none';
+      fill.style.width = '0%';
+      event.target.value = '';
+      fetchAlbumPhotos(currentAlbumId);
+      fetchAlbums();
+    }
+
+    // ── Init ──
     async function refreshAll() {
-      await Promise.all([fetchMusic(), fetchWifi()]);
+      await Promise.all([fetchMusic(), fetchWifi(), fetchAlbums()]);
       updateTimestamp();
     }
 
-    // Initial load
     refreshAll();
-
-    // Auto-refresh: music every 3s, wifi every 10s
     setInterval(fetchMusic, 3000);
     setInterval(fetchWifi, 10000);
     setInterval(updateTimestamp, 60000);
 
-    // Register service worker for PWA (if manifest is present)
     if ('serviceWorker' in navigator) {
-      // No service worker file needed for basic PWA — manifest alone enables Add to Home Screen
+      // manifest alone enables Add to Home Screen
     }
   </script>
 </body>
