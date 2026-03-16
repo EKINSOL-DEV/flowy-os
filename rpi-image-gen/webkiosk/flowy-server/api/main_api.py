@@ -10,6 +10,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 # Ensure cogs package is importable
 COGS_PATH = Path(__file__).parent / "cogs"
@@ -52,7 +53,12 @@ def create_app() -> FastAPI:
         if static_file.exists():
             return HTMLResponse(content=static_file.read_text())
         return HTMLResponse(content="<h1>Test page not found</h1>", status_code=404)
-    
+
+    # Serve Companion PWA
+    companion_dir = Path(__file__).parent / "static" / "companion"
+    if companion_dir.exists():
+        app.mount("/companion", StaticFiles(directory=str(companion_dir), html=True), name="companion")
+
     return app
 
 app = create_app()

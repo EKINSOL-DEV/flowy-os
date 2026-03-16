@@ -1,0 +1,9 @@
+{
+  "name": "Flowy Companion",
+  "short_name": "Flowy",
+  "start_url": "/companion/",
+  "display": "standalone",
+  "background_color": "#F5F0FF",
+  "theme_color": "#FF6B8A",
+  "description": "Remote control for your Flowy device"
+}

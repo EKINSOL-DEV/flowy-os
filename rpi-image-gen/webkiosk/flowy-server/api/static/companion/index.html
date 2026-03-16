@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#F5F0FF">
+  <title>Flowy Companion</title>
+  <link rel="manifest" href="/companion/manifest.json">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F5F0FF;
+      color: #2D2640;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: 16px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding-bottom: 32px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding: 8px 0;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: 800;
+      color: #FF6B8A;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-sub {
+      font-size: 13px;
+      font-weight: 500;
+      color: #7B6F99;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ccc;
+      transition: background 0.3s;
+    }
+
+    .status-dot.online { background: #6DD4A8; }
+    .status-dot.offline { background: #FF6B8A; }
+
+    .device-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #7B6F99;
+      font-weight: 500;
+    }
+
+    /* Cards */
+    .card {
+      background: #FFFFFF;
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 12px rgba(45, 38, 64, 0.06);
+      border: 1px solid #E8E0F5;
+    }
+
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #7B6F99;
+      margin-bottom: 14px;
+    }
+
+    /* Now Playing */
+    .now-playing-content {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .album-art {
+      width: 72px;
+      height: 72px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #E8E0F5 0%, #F5F0FF 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .album-art svg {
+      width: 32px;
+      height: 32px;
+      opacity: 0.4;
+    }
+
+    .album-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .track-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .track-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #2D2640;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .track-artist {
+      font-size: 13px;
+      color: #7B6F99;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .track-idle {
+      font-size: 15px;
+      color: #7B6F99;
+      text-align: center;
+      padding: 12px 0;
+    }
+
+    .music-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .ctrl-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: none;
+      background: #F5F0FF;
+      color: #2D2640;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .ctrl-btn:active {
+      transform: scale(0.92);
+      background: #E8E0F5;
+    }
+
+    .ctrl-btn svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .ctrl-btn.play-pause {
+      width: 60px;
+      height: 60px;
+      background: #FF6B8A;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(255, 107, 138, 0.35);
+    }
+
+    .ctrl-btn.play-pause:active {
+      background: #e8567a;
+    }
+
+    .ctrl-btn.play-pause svg {
+      width: 26px;
+      height: 26px;
+    }
+
+    .progress-bar {
+      margin-top: 16px;
+      height: 4px;
+      background: #E8E0F5;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #FF6B8A;
+      border-radius: 2px;
+      transition: width 0.5s linear;
+      width: 0%;
+    }
+
+    .progress-times {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #7B6F99;
+      margin-top: 4px;
+    }
+
+    /* WiFi Status */
+    .wifi-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+    }
+
+    .wifi-row + .wifi-row {
+      border-top: 1px solid #F5F0FF;
+    }
+
+    .wifi-label {
+      font-size: 13px;
+      color: #7B6F99;
+      font-weight: 500;
+    }
+
+    .wifi-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2D2640;
+      text-align: right;
+      max-width: 60%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .signal-bars {
+      display: inline-flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 16px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    .signal-bar {
+      width: 4px;
+      border-radius: 1px;
+      background: #E8E0F5;
+      transition: background 0.3s;
+    }
+
+    .signal-bar.active { background: #6DD4A8; }
+
+    /* Device Info */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .info-item {
+      background: #F5F0FF;
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .info-item.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .info-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #7B6F99;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #2D2640;
+      margin-top: 4px;
+      word-break: break-all;
+    }
+
+    /* Alarms placeholder */
+    .alarms-placeholder {
+      text-align: center;
+      padding: 20px 12px;
+    }
+
+    .alarms-placeholder svg {
+      width: 48px;
+      height: 48px;
+      color: #E8E0F5;
+      margin-bottom: 12px;
+    }
+
+    .alarms-placeholder p {
+      font-size: 14px;
+      color: #7B6F99;
+      line-height: 1.5;
+    }
+
+    /* Refresh indicator */
+    .refresh-pulse {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #FF6B8A;
+      margin-left: 8px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .refresh-pulse.active {
+      opacity: 1;
+      animation: pulse 0.6s ease-out;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+
+    /* Loading skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, #E8E0F5 25%, #F5F0FF 50%, #E8E0F5 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 6px;
+      height: 16px;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Pull to refresh hint */
+    .last-updated {
+      text-align: center;
+      font-size: 11px;
+      color: #B8ADCC;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <div>
+          <div class="logo">Flowy</div>
+          <div class="logo-sub">Companion</div>
+        </div>
+      </div>
+      <div class="device-status">
+        <span id="device-name">flowpi</span>
+        <span class="status-dot" id="status-dot"></span>
+      </div>
+    </div>
+
+    <!-- Now Playing -->
+    <div class="card" id="music-card">
+      <div class="card-title">Now Playing <span class="refresh-pulse" id="music-pulse"></span></div>
+      <div id="music-content">
+        <div class="track-idle">Connecting...</div>
+      </div>
+    </div>
+
+    <!-- WiFi Status -->
+    <div class="card" id="wifi-card">
+      <div class="card-title">WiFi <span class="refresh-pulse" id="wifi-pulse"></span></div>
+      <div id="wifi-content">
+        <div class="wifi-row">
+          <span class="wifi-label">Network</span>
+          <span class="wifi-value"><div class="skeleton" style="width:100px;display:inline-block"></div></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alarms -->
+    <div class="card" id="alarms-card">
+      <div class="card-title">Alarms</div>
+      <div class="alarms-placeholder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="13" r="8"/>
+          <path d="M12 9v4l2 2"/>
+          <path d="M5 3L2 6"/>
+          <path d="M22 6l-3-3"/>
+        </svg>
+        <p>Alarms are managed on your Flowy device.<br>Tap the screen on your Flowy to set alarms.</p>
+      </div>
+    </div>
+
+    <!-- Device Info -->
+    <div class="card" id="device-card">
+      <div class="card-title">Device <span class="refresh-pulse" id="device-pulse"></span></div>
+      <div class="info-grid" id="device-content">
+        <div class="info-item">
+          <div class="info-label">IP Address</div>
+          <div class="info-value" id="device-ip">--</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Interface</div>
+          <div class="info-value" id="device-iface">wlan0</div>
+        </div>
+        <div class="info-item full-width">
+          <div class="info-label">MAC Address</div>
+          <div class="info-value" id="device-mac">--</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="last-updated" id="last-updated"></div>
+
+  </div>
+
+  <script>
+    // State
+    let musicState = { playing: false };
+    let deviceOnline = false;
+
+    // Helpers
+    function $(id) { return document.getElementById(id); }
+
+    function flashPulse(id) {
+      const el = $(id);
+      if (!el) return;
+      el.classList.add('active');
+      setTimeout(() => el.classList.remove('active'), 600);
+    }
+
+    function formatMs(ms) {
+      if (!ms || ms <= 0) return '0:00';
+      const s = Math.floor(ms / 1000);
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      return m + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    async function api(path) {
+      try {
+        const res = await fetch(path, { signal: AbortSignal.timeout(5000) });
+        if (!res.ok) throw new Error(res.statusText);
+        return await res.json();
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function apiPost(path) {
+      try {
+        const res = await fetch(path, {
+          method: 'POST',
+          signal: AbortSignal.timeout(5000)
+        });
+        if (!res.ok) throw new Error(res.statusText);
+        return await res.json();
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // --- Music ---
+    function renderMusic(data) {
+      const el = $('music-content');
+      if (!data || (!data.playing && !data.track_id)) {
+        el.innerHTML = `
+          <div class="track-idle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#B8ADCC" stroke-width="1.5" style="width:32px;height:32px;margin-bottom:8px;display:block;margin:0 auto 8px">
+              <path d="M9 18V5l12-2v13"/>
+              <circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+            </svg>
+            No music playing
+          </div>`;
+        return;
+      }
+
+      const title = data.title || data.track_id || 'Unknown Track';
+      const artist = data.artist || 'Spotify Connect';
+      const progress = (data.duration_ms > 0) ? Math.min(100, (data.progress_ms / data.duration_ms) * 100) : 0;
+
+      el.innerHTML = `
+        <div class="now-playing-content">
+          <div class="album-art">
+            ${data.art_url
+              ? `<img src="${data.art_url}" alt="Album art">`
+              : `<svg viewBox="0 0 24 24" fill="none" stroke="#B8ADCC" stroke-width="1.5">
+                   <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+                 </svg>`
+            }
+          </div>
+          <div class="track-info">
+            <div class="track-title">${escHtml(title)}</div>
+            <div class="track-artist">${escHtml(artist)}</div>
+          </div>
+        </div>
+        <div class="music-controls">
+          <button class="ctrl-btn" onclick="musicPrev()" aria-label="Previous">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+          </button>
+          <button class="ctrl-btn play-pause" onclick="musicToggle()" aria-label="${data.playing ? 'Pause' : 'Play'}">
+            ${data.playing
+              ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6zm8-14v14h4V5z"/></svg>'
+              : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>'
+            }
+          </button>
+          <button class="ctrl-btn" onclick="musicNext()" aria-label="Next">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm10-12v12h2V6z"/></svg>
+          </button>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+        <div class="progress-times">
+          <span>${formatMs(data.progress_ms)}</span>
+          <span>${formatMs(data.duration_ms)}</span>
+        </div>`;
+    }
+
+    function escHtml(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    async function fetchMusic() {
+      flashPulse('music-pulse');
+      const data = await api('/music/status');
+      if (data) {
+        musicState = data;
+        deviceOnline = true;
+        renderMusic(data);
+      }
+      updateStatusDot();
+    }
+
+    async function musicToggle() {
+      const endpoint = musicState.playing ? '/music/pause' : '/music/play';
+      await apiPost(endpoint);
+      // Optimistic update
+      musicState.playing = !musicState.playing;
+      renderMusic(musicState);
+      // Then refresh real state
+      setTimeout(fetchMusic, 500);
+    }
+
+    async function musicNext() {
+      await apiPost('/music/skip');
+      setTimeout(fetchMusic, 500);
+    }
+
+    async function musicPrev() {
+      await apiPost('/music/previous');
+      setTimeout(fetchMusic, 500);
+    }
+
+    // --- WiFi ---
+    function renderWifi(data) {
+      const el = $('wifi-content');
+      if (!data) {
+        el.innerHTML = '<div class="wifi-row"><span class="wifi-label">Status</span><span class="wifi-value">Unavailable</span></div>';
+        return;
+      }
+
+      const ssid = data.ssid || data.SSID || '--';
+      const ip = data.ip_address || data.ip || '--';
+      const signal = data.signal_strength || data.signal || data.signal_percent || 0;
+      const mac = data.mac_address || data.mac || '--';
+      const state = data.state || data.status || '--';
+
+      // Signal bars (4 bars)
+      const signalNum = parseInt(signal) || 0;
+      let bars = '';
+      for (let i = 0; i < 4; i++) {
+        const h = 4 + i * 4;
+        const active = signalNum > (i * 25) ? 'active' : '';
+        bars += `<div class="signal-bar ${active}" style="height:${h}px"></div>`;
+      }
+
+      el.innerHTML = `
+        <div class="wifi-row">
+          <span class="wifi-label">Network</span>
+          <span class="wifi-value">${escHtml(ssid)} <span class="signal-bars">${bars}</span></span>
+        </div>
+        <div class="wifi-row">
+          <span class="wifi-label">IP Address</span>
+          <span class="wifi-value">${escHtml(ip)}</span>
+        </div>
+        <div class="wifi-row">
+          <span class="wifi-label">Signal</span>
+          <span class="wifi-value">${signalNum}%</span>
+        </div>
+        <div class="wifi-row">
+          <span class="wifi-label">Status</span>
+          <span class="wifi-value">${escHtml(state)}</span>
+        </div>`;
+
+      // Update device info section too
+      $('device-ip').textContent = ip;
+      $('device-mac').textContent = mac;
+    }
+
+    async function fetchWifi() {
+      flashPulse('wifi-pulse');
+      const data = await api('/wifi/interface?interface_name=wlan0');
+      if (data) {
+        deviceOnline = true;
+        renderWifi(data);
+      } else {
+        deviceOnline = false;
+        renderWifi(null);
+      }
+      updateStatusDot();
+    }
+
+    // --- Device ---
+    function updateStatusDot() {
+      const dot = $('status-dot');
+      dot.className = 'status-dot ' + (deviceOnline ? 'online' : 'offline');
+    }
+
+    function updateTimestamp() {
+      const now = new Date();
+      const t = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      $('last-updated').textContent = 'Last updated ' + t;
+    }
+
+    // --- Init ---
+    async function refreshAll() {
+      await Promise.all([fetchMusic(), fetchWifi()]);
+      updateTimestamp();
+    }
+
+    // Initial load
+    refreshAll();
+
+    // Auto-refresh: music every 3s, wifi every 10s
+    setInterval(fetchMusic, 3000);
+    setInterval(fetchWifi, 10000);
+    setInterval(updateTimestamp, 60000);
+
+    // Register service worker for PWA (if manifest is present)
+    if ('serviceWorker' in navigator) {
+      // No service worker file needed for basic PWA — manifest alone enables Add to Home Screen
+    }
+  </script>
+</body>
+</html>
