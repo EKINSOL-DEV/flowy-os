@@ -13,6 +13,7 @@ mmdebstrap:
     - triggerhappy
     - wlr-randr
     - ntpdate
+    - tzdata
     # Dependencies for flowy-app
     - libnotify4
     - libnss3
