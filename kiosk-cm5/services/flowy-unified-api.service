@@ -8,6 +8,8 @@ Restart=always
 WorkingDirectory=/flowy/server/api
 Environment=FLOWY_COMPANION_DIR=/opt/flowy/companion
 Environment=FLOWY_PHOTOS_DIR=/flowy/photos
+Environment=SPOTIFY_CLIENT_ID=2d46b538c45b46cf9e7682a287745917
+Environment=SPOTIFY_CLIENT_SECRET=e9aae61a3c2047619a1e7b706316bd3a
 ExecStart=/flowy/server/.venv/bin/python main_api.py
 StandardError=journal
 

@@ -34,4 +34,5 @@ exec chromium-browser \
     --window-position=0,0 \
     --disable-pinch \
     --overscroll-history-navigation=disabled \
+    --autoplay-policy=no-user-gesture-required \
     http://localhost:8080
