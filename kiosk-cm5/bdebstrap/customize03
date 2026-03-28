@@ -1,59 +1,71 @@
 #!/bin/bash
-# Services and configuration setup
+# Services and configuration setup for Flowy kiosk
+# Architecture: Weston (Wayland) + Chromium kiosk + nginx + FastAPI
 
 set -e
 
-echo "Setting up services and configuration..."
+echo "Setting up Flowy services and configuration..."
 
-# Copy systemd service files
-cp /tmp/services/*.service /etc/systemd/system/
+# --- Systemd services ---
 
-# Enable kiosk services
-systemctl enable kiosk-frontend.service
-systemctl enable kiosk-nfc.service  
-systemctl enable kiosk-network.service
-systemctl enable kiosk-updater.service
+# Copy new service files
+cp /tmp/services/flowy-weston.service /etc/systemd/system/
+cp /tmp/services/flowy-unified-api.service /etc/systemd/system/
 
-# Configure nginx
-cp /tmp/nginx.conf /etc/nginx/sites-available/kiosk
-ln -sf /etc/nginx/sites-available/kiosk /etc/nginx/sites-enabled/default
-rm -f /etc/nginx/sites-enabled/default.orig
+# Install kiosk launcher script
+cp /tmp/services/flowy-kiosk.sh /usr/bin/flowy-kiosk
+chmod +x /usr/bin/flowy-kiosk
 
-# Enable nginx
+# Enable services
+systemctl enable flowy-weston.service
+systemctl enable flowy-unified-api.service
 systemctl enable nginx
 
-# Configure X11 for kiosk mode
-mkdir -p /home/kiosk/.config/autostart
-cat > /home/kiosk/.config/autostart/kiosk.desktop << EOF
-[Desktop Entry]
-Type=Application
-Name=Kiosk Browser
-Exec=/opt/kiosk/scripts/start-kiosk.sh
-Hidden=false
-NoDisplay=false
-X-GNOME-Autostart-enabled=true
-EOF
+# Disable obsolete services (if present from older builds)
+systemctl disable kiosk-frontend.service 2>/dev/null || true
+systemctl disable kiosk-network.service 2>/dev/null || true
 
-# Create X11 startup script
-cat > /home/kiosk/.xinitrc << EOF
-#!/bin/bash
-xset -dpms
-xset s off
-xset s noblank
-/opt/kiosk/scripts/start-kiosk.sh
-EOF
+# Mask systemd-networkd-wait-online — it blocks boot for 2 min
+# waiting for all interfaces. NetworkManager handles networking.
+systemctl mask systemd-networkd-wait-online.service
 
-# Make scripts executable
-chmod +x /home/kiosk/.xinitrc
-chmod +x /opt/kiosk/scripts/*.sh
+# --- Weston configuration ---
 
-# Set ownership for kiosk user
-chown -R kiosk:kiosk /home/kiosk/.config
-chown -R kiosk:kiosk /opt/kiosk
+mkdir -p /etc/xdg/weston
+cp /tmp/weston.ini /etc/xdg/weston/weston.ini
 
-# Configure auto-start X11 on login
-echo 'if [ -z "$DISPLAY" ] && [ "$XDG_VTNR" = 1 ]; then' >> /home/kiosk/.bashrc
-echo '    exec startx' >> /home/kiosk/.bashrc
-echo 'fi' >> /home/kiosk/.bashrc
+# --- Nginx configuration ---
 
-echo "Services and configuration setup completed."
+# Remove default nginx config
+rm -f /etc/nginx/sites-enabled/default
+
+# Install kiosk (port 8080) and companion (port 80) vhosts
+cp /tmp/nginx-kiosk.conf /etc/nginx/sites-available/kiosk
+cp /tmp/nginx-companion.conf /etc/nginx/sites-available/companion
+ln -sf /etc/nginx/sites-available/kiosk /etc/nginx/sites-enabled/kiosk
+ln -sf /etc/nginx/sites-available/companion /etc/nginx/sites-enabled/companion
+
+# --- User setup ---
+
+# Create flowy user if it doesn't exist
+if ! id "flowy" &>/dev/null; then
+    useradd -m -s /bin/bash flowy
+    echo "flowy:demo" | chpasswd
+    usermod -aG sudo,video,render,input flowy
+fi
+
+# --- Directory structure ---
+
+mkdir -p /opt/flowy/kiosk
+mkdir -p /opt/flowy/companion
+mkdir -p /flowy/server/api
+mkdir -p /flowy/photos
+chown -R flowy:flowy /opt/flowy
+chown -R root:root /flowy/server
+chown -R root:root /flowy/photos
+
+echo "Flowy services and configuration setup completed."
+echo "  - Weston (Wayland compositor) → graphical.target"
+echo "  - nginx :8080 (kiosk) + :80 (companion)"
+echo "  - flowy-unified-api :10000 (FastAPI)"
+echo "  - Chromium kiosk via /usr/bin/flowy-kiosk"
