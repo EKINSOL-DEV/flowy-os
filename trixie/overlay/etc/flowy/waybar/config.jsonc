@@ -1,0 +1,22 @@
+{
+  // Thin bar for Flowy browser mode: just a keyboard-toggle button and a
+  // back-to-clock button, top-right. Vertical on the rotated panel would be
+  // awkward, so it rides the top edge (short side after rotate 270).
+  "layer": "top",
+  "position": "top",
+  "height": 40,
+  "margin-top": 0,
+  "modules-left": [],
+  "modules-center": [],
+  "modules-right": ["custom/keyboard", "custom/exit"],
+  "custom/keyboard": {
+    "format": "⌨",
+    "tooltip": false,
+    "on-click": "curl -s -m 3 -X POST http://localhost:10000/display/browser-keyboard -H 'Content-Type: application/json' -d '{\"action\":\"toggle\"}'"
+  },
+  "custom/exit": {
+    "format": "✕",
+    "tooltip": false,
+    "on-click": "curl -s -m 3 -X POST http://localhost:10000/display/browser-mode -H 'Content-Type: application/json' -d '{\"on\":false}'"
+  }
+}

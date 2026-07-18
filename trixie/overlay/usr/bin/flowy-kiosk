@@ -59,7 +59,8 @@ if [ -f "$BROWSER_MODE_FLAG" ]; then
     exec "$CHROMIUM_BIN" \
         "${COMMON_FLAGS[@]}" \
         --load-extension=/opt/flowy/browser-ext \
-        --start-maximized
+        --start-maximized \
+        https://www.google.com
 else
     exec "$CHROMIUM_BIN" \
         --kiosk \

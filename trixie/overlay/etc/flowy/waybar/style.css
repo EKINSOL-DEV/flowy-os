@@ -1,0 +1,21 @@
+* {
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 20px;
+  min-height: 0;
+}
+window#waybar {
+  background: rgba(30, 26, 22, 0.85);
+  color: #ffffff;
+}
+#custom-keyboard, #custom-exit {
+  padding: 0 18px;
+  margin: 4px 4px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+}
+#custom-keyboard:hover, #custom-exit:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+#custom-exit {
+  background: rgba(217, 90, 138, 0.35);
+}

@@ -3,4 +3,5 @@
 # maximized in the remaining space.
 wlr-randr --output DSI-2 --transform 270
 wvkbd-mobintl -L 240 --hidden &
+waybar -c /etc/flowy/waybar/config.jsonc -s /etc/flowy/waybar/style.css &
 /usr/bin/flowy-kiosk &
