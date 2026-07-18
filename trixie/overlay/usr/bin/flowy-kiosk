@@ -17,12 +17,6 @@ for i in $(seq 1 50); do
     sleep 0.2
 done
 
-# Use a dedicated profile dir — wiped on each launch to prevent
-# session restore and stale cache from overriding the target URL.
-# This also wipes browsing history/logins when leaving browser mode.
-KIOSK_PROFILE="/tmp/flowy-chromium-profile"
-rm -rf "$KIOSK_PROFILE"
-
 # Browser mode (full chromium UI for browsing). The flag lives in /tmp so a
 # reboot always boots back into the kiosk clock. Toggled via
 # POST /display/browser-mode (companion -> Device page).
@@ -31,40 +25,51 @@ BROWSER_MODE_FLAG="/tmp/flowy-browser-mode"
 # Debian's package installs `chromium`; Raspberry Pi OS uses `chromium-browser`.
 CHROMIUM_BIN="$(command -v chromium-browser || command -v chromium)"
 
-# Remote debugging binds to 127.0.0.1 only — reachable exclusively through an
-# SSH tunnel, used for on-device QA (drive the real kiosk UI via CDP).
+# Flags shared by both modes.
 COMMON_FLAGS=(
+    # Remote debugging binds to 127.0.0.1 only — reachable exclusively through
+    # an SSH tunnel, used for on-device QA (drive the real UI via CDP).
     --remote-debugging-port=9223
-    --user-data-dir="$KIOSK_PROFILE"
     --noerrdialogs
     --disable-infobars
     --no-first-run
     --disable-translate
     --disable-features=TranslateUI
     --disable-session-crashed-bubble
-    --disable-application-cache
-    --disk-cache-size=1
     --autoplay-policy=no-user-gesture-required
     # Wayland IME flag stays for the day a compositor speaks text-input-v3.
     --enable-wayland-ime
 )
 
 if [ -f "$BROWSER_MODE_FLAG" ]; then
-    # Full browser UI (tabs + address bar); pinch/overscroll allowed here.
-    # No URL: opens the new-tab page — browser mode is for browsing, not the
-    # Flowy app (which is what kiosk mode shows).
-    # NO fixed --window-size here: labwc maximizes the window and re-maximizes
-    # it when wvkbd's exclusive zone appears/disappears — a fixed size made
-    # chromium keep its old height, leaving a black gap when the keyboard hid.
+    # PERSISTENT profile for browser mode: logins, cookies, history and tabs
+    # must survive relaunches (mode switches, crashes). Lives in the user's
+    # home (owned by flowy, the compositor user), NOT in the wiped /tmp kiosk
+    # profile. Never deleted here.
+    BROWSER_PROFILE="$HOME/.local/share/flowy-browser"
+    mkdir -p "$BROWSER_PROFILE"
+
+    # Full browser UI (tabs + address bar); pinch/overscroll allowed, cache on.
+    # No fixed --window-size: labwc maximizes and re-maximizes when wvkbd's
+    # exclusive zone appears/disappears (a fixed size left a black gap).
     exec "$CHROMIUM_BIN" \
         "${COMMON_FLAGS[@]}" \
+        --user-data-dir="$BROWSER_PROFILE" \
         --load-extension=/opt/flowy/browser-ext \
         --start-maximized \
         https://www.google.com
 else
+    # Kiosk clock: ephemeral profile, wiped each launch so a stale session or
+    # cache can never override the target URL. Cache disabled (always fresh app).
+    KIOSK_PROFILE="/tmp/flowy-chromium-profile"
+    rm -rf "$KIOSK_PROFILE"
+
     exec "$CHROMIUM_BIN" \
         --kiosk \
         "${COMMON_FLAGS[@]}" \
+        --user-data-dir="$KIOSK_PROFILE" \
+        --disable-application-cache \
+        --disk-cache-size=1 \
         --window-size=1280,800 \
         --window-position=0,0 \
         --disable-pinch \
