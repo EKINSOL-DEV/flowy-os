@@ -1,0 +1,13 @@
+[Unit]
+Description=Flowy first-boot: grow rootfs to fill the eMMC
+ConditionPathExists=!/var/lib/flowy-growfs.done
+After=local-fs.target
+Before=flowy-unified-api.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/flowy-growfs.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

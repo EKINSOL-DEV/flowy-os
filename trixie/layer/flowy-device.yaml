@@ -109,4 +109,4 @@ mmdebstrap:
 
     # 8. Services. raspotify is ordered after flowy-audio-init via the drop-in
     #    in the overlay (SoftMaster softvol must exist before librespot starts).
-    - $BDEBSTRAP_HOOKS/enable-units "$1" flowy-unified-api flowy-weston flowy-audio-init nginx avahi-daemon raspotify ssh NetworkManager
+    - $BDEBSTRAP_HOOKS/enable-units "$1" flowy-unified-api flowy-weston flowy-audio-init flowy-growfs nginx avahi-daemon raspotify ssh NetworkManager
