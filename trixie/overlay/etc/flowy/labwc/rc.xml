@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
-<!-- Minimal labwc config for Flowy browser mode: no decorations frills, just
-     a maximized browser above the wvkbd on-screen keyboard. -->
+<!-- Minimal labwc config for Flowy browser mode. The touch device must be
+     mapped to the output so touches follow its transform (rotate 270) —
+     without this, touch input stays in panel-native portrait orientation. -->
 <labwc_config>
-  <theme><titlebar><layout></layout></titlebar></theme>
   <placement><policy>automatic</policy></placement>
+  <touch mapToOutput="DSI-2"/>
 </labwc_config>
