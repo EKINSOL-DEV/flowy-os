@@ -15,6 +15,9 @@ device:
   # A production/generalized image must override this.
   user1pass: "Flowy!Dev26"
 
+env:
+  IGconf_ieee80211_regdom: BE
+
 image:
   layer: image-rpios
   name: flowy-trixie

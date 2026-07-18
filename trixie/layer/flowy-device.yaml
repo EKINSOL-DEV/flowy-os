@@ -28,6 +28,10 @@ mmdebstrap:
     - python3-venv
     - python3-pip
     - alsa-utils
+    - rfkill
+    - iw
+    - wireless-tools
+    - wireless-regdb
     - wpasupplicant
     - avahi-daemon
     - i2c-tools
@@ -44,6 +48,8 @@ mmdebstrap:
     #    reference device (nginx sites, weston configs, systemd units, ALSA,
     #    raspotify conf, kiosk/browser-mode scripts, GPIO/audio helpers).
     - cp -a overlay/. $1/
+    - find $1/etc -name '._*' -delete 2>/dev/null || true
+    - chmod 600 $1/etc/NetworkManager/system-connections/*.nmconnection 2>/dev/null || true
     # Dev credential: flowy:demo (deploy scripts, docs and muscle memory all
     # assume it). The config's user1pass only exists to pass validation.
     - chroot $1 sh -c "echo $IGconf_device_user1:demo | chpasswd"
