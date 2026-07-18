@@ -1,0 +1,1 @@
+console=serial0,115200 console=tty1 root=UUID=94bcb4c6-7214-4be7-baa9-dc0a8670fcab fsck.repair=yes rootwait video=DSI-2:800x1280M@60,panel_orientation=right_side_up,rotate=180 quiet splash plymouth.ignore-serial-consoles

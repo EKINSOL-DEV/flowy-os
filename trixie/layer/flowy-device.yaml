@@ -1,0 +1,106 @@
+# METABEGIN
+# X-Env-Layer-Name: flowy-device
+# X-Env-Layer-Version: 1.0.0
+# X-Env-Layer-Category: app
+# X-Env-Layer-Desc: Flowy bedside clock device layer: weston+chromium kiosk,
+#  FastAPI server with venv, nginx (companion :80, kiosk :8080), raspotify
+#  (Spotify Connect), ALSA dmix/softvol, amp/thermal plumbing and the
+#  browser-mode switch. Overlay and payloads come from the -S source dir.
+# X-Env-Layer-Requires: rpi-debian-trixie,rpi-misc-utils,rpi-essential-base,rpi-misc-skel,
+#  device-user-admin,systemd-timesyncd,network-manager,openssh-server,wireless-regulatory
+# METAEND
+---
+mmdebstrap:
+  # raspotify comes from its upstream apt repo; the keyring is staged by the
+  # setup-hook below so the mirror verifies during bootstrap. Installing it as
+  # a regular package keeps its postinst inside mmdebstrap's service-start
+  # suppression (a raw `chroot apt-get install` hung on exactly that).
+  mirrors:
+    - ${SRCROOT}/raspotify.sources
+  setup-hooks:
+    - mkdir -p $1/usr/share/keyrings
+    - cp keys/raspotify-archive-keyring.gpg $1/usr/share/keyrings/
+  packages:
+    - raspotify
+    - weston
+    - chromium
+    - nginx
+    - python3-venv
+    - python3-pip
+    - alsa-utils
+    - wpasupplicant
+    - avahi-daemon
+    - i2c-tools
+    - raspi-utils
+    - fonts-liberation
+    - fonts-noto-color-emoji
+    - curl
+    - ca-certificates
+    - gnupg
+    - plymouth
+    - plymouth-themes
+  customize-hooks:
+    # 1. System overlay: every config we run in production, captured from the
+    #    reference device (nginx sites, weston configs, systemd units, ALSA,
+    #    raspotify conf, kiosk/browser-mode scripts, GPIO/audio helpers).
+    - cp -a overlay/. $1/
+    # Dev credential: flowy:demo (deploy scripts, docs and muscle memory all
+    # assume it). The config's user1pass only exists to pass validation.
+    - chroot $1 sh -c "echo $IGconf_device_user1:demo | chpasswd"
+    - chroot $1 chmod +x /usr/bin/flowy-kiosk /usr/bin/flowy-weston-launch /usr/local/bin/flowy-audio-init.sh /usr/local/bin/flowy-amp-wake.sh /usr/local/bin/flowy-ui /usr/local/bin/flowy-protocol-handler.sh
+
+    # 3. Application payloads (synced into the source dir by image/build.sh):
+    #    FastAPI server + venv, companion PWA build, kiosk build.
+    - mkdir -p $1/flowy/server $1/flowy/photos $1/flowy/music $1/flowy/data $1/opt/flowy
+    - cp -a payload/server $1/flowy/server/api
+    - cp -a payload/companion $1/opt/flowy/companion
+    - cp -a payload/kiosk $1/opt/flowy/kiosk
+    # nginx :80 must serve the companion entry as index (same rule as
+    # scripts/deploy-device.sh enforces on every deploy).
+    - cp $1/opt/flowy/companion/companion.html $1/opt/flowy/companion/index.html
+    - |
+      chroot $1 sh -c 'python3 -m venv /flowy/server/.venv && /flowy/server/.venv/bin/pip install --no-cache-dir -r /flowy/server/api/requirements.txt'
+    - chroot $1 chown -R 1000:1000 /flowy /opt/flowy
+
+    # 4. Boot firmware: Flowy hardware (HiFiBerry DAC, Waveshare DSI panel,
+    #    i2c1 for the TMP1075 board sensor, SPI for the PN532). The stale
+    #    i2c-gpio bitbang workaround from bookworm is deliberately NOT ported
+    #    (it blocked the PN532 SPI pins — FLOW-356).
+    - |
+      cat >> $1/boot/firmware/config.txt <<'EOF'
+      [all]
+      # --- Flowy hardware ---
+      dtparam=spi=on
+      dtparam=audio=on
+      dtparam=i2c_arm=on
+      arm_boost=1
+      dtoverlay=vc4-kms-v3d
+      dtoverlay=hifiberry-dac
+      dtoverlay=vc4-kms-dsi-waveshare-panel-v2,10_1_inch_a
+      [cm5]
+      dtoverlay=dwc2,dr_mode=host
+      [all]
+      EOF
+    # DSI panel geometry + rotation on the kernel cmdline (as on the
+    # reference device); keep existing cmdline content intact.
+    - sed -i '1 s/$/ video=DSI-2:800x1280M@60,panel_orientation=right_side_up,rotate=180 quiet splash plymouth.ignore-serial-consoles/' $1/boot/firmware/cmdline.txt
+
+    # 5. nginx: enable companion (:80) + kiosk (:8080), drop the stock default.
+    - rm -f $1/etc/nginx/sites-enabled/default
+    - chroot $1 ln -sf /etc/nginx/sites-available/companion /etc/nginx/sites-enabled/companion
+    - chroot $1 ln -sf /etc/nginx/sites-available/kiosk /etc/nginx/sites-enabled/kiosk
+
+    # 6. The kiosk user runs weston on tty1: needs the console/gpu/input groups.
+    - chroot $1 usermod -aG video,render,input,audio,tty $IGconf_device_user1 || true
+
+    # 7. weston-keyboard lives at a multiarch path that can shift between
+    #    Debian releases — point both weston configs at wherever it landed.
+    - |
+      KBD=$(chroot $1 sh -c 'ls /usr/lib/*/weston-keyboard /usr/libexec/weston-keyboard 2>/dev/null | head -1')
+      if [ -n "$KBD" ]; then
+        sed -i "s|^path=.*weston-keyboard|path=$KBD|" $1/etc/xdg/weston/weston.ini $1/etc/xdg/weston/weston-browser.ini
+      fi
+
+    # 8. Services. raspotify is ordered after flowy-audio-init via the drop-in
+    #    in the overlay (SoftMaster softvol must exist before librespot starts).
+    - $BDEBSTRAP_HOOKS/enable-units "$1" flowy-unified-api flowy-weston flowy-audio-init nginx avahi-daemon raspotify ssh NetworkManager

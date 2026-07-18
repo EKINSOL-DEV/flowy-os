@@ -1,0 +1,10 @@
+#!/bin/bash
+# /usr/bin/flowy-weston-launch — pick the weston config by UI mode.
+# Kiosk (default): kiosk-shell, app fullscreen. Browser mode (flag set by
+# POST /display/browser-mode): desktop-shell so chromium keeps its tab/URL
+# bar instead of being forced fullscreen by kiosk-shell.
+CFG=/etc/xdg/weston/weston.ini
+if [ -f /tmp/flowy-browser-mode ]; then
+    CFG=/etc/xdg/weston/weston-browser.ini
+fi
+exec /usr/bin/weston --modules=systemd-notify.so --config="$CFG"

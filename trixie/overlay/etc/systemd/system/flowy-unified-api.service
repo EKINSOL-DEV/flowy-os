@@ -1,0 +1,17 @@
+[Unit]
+Description=Flowy Unified API Server
+After=multi-user.target
+
+[Service]
+User=root
+Restart=always
+WorkingDirectory=/flowy/server/api
+Environment=FLOWY_COMPANION_DIR=/opt/flowy/companion
+Environment=FLOWY_PHOTOS_DIR=/flowy/photos
+Environment=SPOTIFY_CLIENT_ID=__PROVISION_ME__
+Environment=SPOTIFY_CLIENT_SECRET=__PROVISION_ME__
+ExecStart=/flowy/server/.venv/bin/python main_api.py
+StandardError=journal
+
+[Install]
+WantedBy=default.target

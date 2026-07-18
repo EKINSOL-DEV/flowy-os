@@ -1,0 +1,5 @@
+X-IG-Signed-By: /usr/share/keyrings/raspotify-archive-keyring.gpg
+Types: deb
+URIs: https://dtcooper.github.io/raspotify
+Suites: raspotify
+Components: main

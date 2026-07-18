@@ -1,0 +1,17 @@
+# /etc/systemd/system/flowy-flutter.service — Flutter kiosk via flutter-pi
+# (FLOW-347 A/B test). Conflicts= makes systemd stop the web kiosk (weston +
+# chromium) when this starts and vice versa, so switching is one command.
+[Unit]
+Description=Flowy Flutter Kiosk (flutter-pi)
+Conflicts=flowy-weston.service
+After=network.target flowy-unified-api.service
+
+[Service]
+ExecStartPre=-/usr/bin/pkill -f /usr/lib/chromium/chromium
+Environment=LD_PRELOAD=/opt/flowy/flutter-app/librive_text.so
+ExecStart=/usr/local/bin/flutter-pi --release -o landscape_left /opt/flowy/flutter-app
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,12 @@
+[Unit]
+Description=Flowy audio init (prime ALSA softvol control before raspotify)
+After=sound.target
+Before=raspotify.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/flowy-audio-init.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

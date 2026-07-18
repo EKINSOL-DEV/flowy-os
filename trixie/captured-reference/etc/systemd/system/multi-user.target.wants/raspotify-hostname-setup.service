@@ -1,0 +1,12 @@
+[Unit]
+Description=Update raspotify hostname configuration
+After=network.target
+Before=raspotify.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'HOSTNAME=$(hostname); sed -i "s/{hostname}/$HOSTNAME/g" /etc/raspotify/conf'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

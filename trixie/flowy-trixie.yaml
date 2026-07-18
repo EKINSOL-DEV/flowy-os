@@ -1,0 +1,30 @@
+# flowy-trixie — rpi-image-gen configuration for the Flowy bedside clock.
+# Debian trixie base (=> weston 14 with text-input-v3, so the on-screen
+# keyboard finally pairs with chromium — FLOW-357/358).
+#
+# Build (on the arm build server, from the synced source dir):
+#   rpi-image-gen build -S ~/flowy-image -c ~/flowy-image/flowy-trixie.yaml
+# See image/build.sh for the full build orchestration from a dev machine.
+
+device:
+  layer: rpi-cm5
+  hostname: flowpi
+  user1: flowy
+  # Placeholder that satisfies the strength validator; the flowy-device layer
+  # resets it to the dev password 'demo' (all tooling expects flowy:demo).
+  # A production/generalized image must override this.
+  user1pass: "Flowy!Dev26"
+
+image:
+  layer: image-rpios
+  name: flowy-trixie
+  boot_part_size: 200%
+  root_part_size: 150%
+
+layer:
+  # Not trixie-minbase: that base hard-wires systemd-networkd + iwd as the
+  # network stack, while Flowy's wifi flows run on NetworkManager (nmcli in
+  # wifi_cog). We compose the same base minus networking and let the
+  # flowy-device layer require network-manager as the activator.
+  base: debian-trixie-arm64-multi
+  app: flowy-device

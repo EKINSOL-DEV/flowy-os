@@ -1,0 +1,66 @@
+#!/bin/bash
+# Chromium launcher for the Flowy device.
+# Deployed to /usr/bin/flowy-kiosk on the Pi; weston's [autolaunch] runs it
+# with watch=true, so whenever chromium exits this script is re-run. That is
+# exactly how browser mode switches: the API writes/removes the mode flag and
+# kills chromium, and the relaunch picks the right configuration.
+
+# Wait for nginx + API to be ready before launching Chromium,
+# otherwise Chromium opens an error page and stays there.
+# Uses systemctl to wait for services, then a quick HTTP check as fallback.
+systemctl is-active --wait nginx.service 2>/dev/null &
+systemctl is-active --wait flowy-unified-api.service 2>/dev/null &
+wait
+
+for i in $(seq 1 50); do
+    curl -s -o /dev/null http://localhost:8080 && break
+    sleep 0.2
+done
+
+# Use a dedicated profile dir — wiped on each launch to prevent
+# session restore and stale cache from overriding the target URL.
+# This also wipes browsing history/logins when leaving browser mode.
+KIOSK_PROFILE="/tmp/flowy-chromium-profile"
+rm -rf "$KIOSK_PROFILE"
+
+# Browser mode (FLOW: full chromium UI for browsing with a USB/BT keyboard and
+# mouse). The flag lives in /tmp so a reboot always boots back into the kiosk
+# clock. Toggled via POST /display/browser-mode (companion -> Device page).
+BROWSER_MODE_FLAG="/tmp/flowy-browser-mode"
+
+# Remote debugging binds to 127.0.0.1 only — reachable exclusively through an
+# SSH tunnel, used for on-device QA (drive the real kiosk UI via CDP).
+COMMON_FLAGS=(
+    --remote-debugging-port=9223
+    --user-data-dir="$KIOSK_PROFILE"
+    --noerrdialogs
+    --disable-infobars
+    --no-first-run
+    --disable-translate
+    --disable-features=TranslateUI
+    --disable-session-crashed-bubble
+    --disable-application-cache
+    --disk-cache-size=1
+    --window-size=1280,800
+    --window-position=0,0
+    --autoplay-policy=no-user-gesture-required
+    # Wayland IME: lets text fields summon weston's on-screen keyboard
+    # ([input-method] in weston.ini) when no physical keyboard is attached.
+    --enable-wayland-ime
+)
+
+if [ -f "$BROWSER_MODE_FLAG" ]; then
+    # Full browser UI (tabs + address bar); pinch/overscroll allowed here.
+    # No URL: opens the new-tab page — browser mode is for browsing, not the
+    # Flowy app (which is what kiosk mode shows).
+    exec chromium-browser \
+        "${COMMON_FLAGS[@]}" \
+        --start-maximized
+else
+    exec chromium-browser \
+        --kiosk \
+        "${COMMON_FLAGS[@]}" \
+        --disable-pinch \
+        --overscroll-history-navigation=disabled \
+        http://localhost:8080
+fi

@@ -1,0 +1,28 @@
+#!/bin/bash
+# /usr/local/bin/flowy-ui — switch the kiosk UI between the web app (weston +
+# chromium) and the Flutter spike (flutter-pi). FLOW-347 A/B test.
+#
+#   flowy-ui web       -> weston + chromium kiosk (the current app)
+#   flowy-ui flutter   -> flutter-pi kiosk (device-flutter spike)
+#   flowy-ui status    -> which one is active
+set -e
+case "${1:-status}" in
+  flutter)
+    systemctl stop flowy-weston.service 2>/dev/null || true
+    pkill -f /usr/lib/chromium/chromium 2>/dev/null || true
+    systemctl start flowy-flutter.service
+    echo "UI: flutter (switch back: flowy-ui web)"
+    ;;
+  web)
+    systemctl stop flowy-flutter.service 2>/dev/null || true
+    systemctl start flowy-weston.service
+    echo "UI: web (switch: flowy-ui flutter)"
+    ;;
+  status)
+    echo "weston:  $(systemctl is-active flowy-weston.service)"
+    echo "flutter: $(systemctl is-active flowy-flutter.service)"
+    ;;
+  *)
+    echo "usage: flowy-ui web|flutter|status"; exit 1
+    ;;
+esac

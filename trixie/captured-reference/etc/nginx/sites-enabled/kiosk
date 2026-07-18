@@ -1,0 +1,41 @@
+server {
+    listen 8080;
+    server_name _;
+
+    # Device app (static files)
+    root /opt/flowy/kiosk;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;  # SPA fallback
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+    }
+
+    # API proxy to FastAPI on port 10000. A single regex catches every API
+    # prefix — with or without a trailing slash — and forwards the URI and
+    # method unchanged.
+    #
+    # NOTE: do NOT use `location /alarms/ { proxy_pass ...:10000/alarms/; }`
+    # style blocks here. They don't match the bare `/alarms`, so POST /alarms
+    # fell through to the SPA fallback, which 301-redirected to /alarms/ —
+    # browsers turn a 301 POST into a GET, so saving an alarm silently became
+    # "fetch the list" and nothing was ever stored.
+    location ~ ^/(settings|alarms|alarm|notes|music|local-music|music-static|wifi|photos|photos-static|display|led|nfc|parental|clock|audio)(/|$) {
+        proxy_pass http://127.0.0.1:10000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        client_max_body_size 50m;
+    }
+
+    # SSE events (device kiosk keeps one EventSource open on /events). Buffering
+    # off so events flush immediately; long read timeout so nginx doesn't drop
+    # the idle stream between the 15s heartbeats.
+    location = /events {
+        proxy_pass http://127.0.0.1:10000/events;
+        proxy_set_header Connection '';
+        proxy_http_version 1.1;
+        chunked_transfer_encoding off;
+        proxy_buffering off;
+        proxy_read_timeout 3600s;
+    }
+}

@@ -1,0 +1,11 @@
+# Flowy native Spotify Connect (librespot). Output -> ALSA default -> HiFiBerry DAC.
+LIBRESPOT_NAME="Flowy"
+LIBRESPOT_DEVICE_TYPE="speaker"
+LIBRESPOT_BITRATE="320"
+LIBRESPOT_INITIAL_VOLUME="50"
+LIBRESPOT_BACKEND="alsa"
+LIBRESPOT_DEVICE="default"
+LIBRESPOT_MIXER="alsa"
+LIBRESPOT_ALSA_MIXER_CONTROL="SoftMaster"
+LIBRESPOT_ALSA_MIXER_DEVICE="default"
+LIBRESPOT_ONEVENT="/usr/local/bin/flowy-amp-wake.sh"
