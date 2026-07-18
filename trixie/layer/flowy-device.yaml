@@ -23,6 +23,9 @@ mmdebstrap:
   packages:
     - raspotify
     - weston
+    - labwc
+    - wvkbd
+    - wlr-randr
     - chromium
     - nginx
     - python3-venv

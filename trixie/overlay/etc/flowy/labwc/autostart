@@ -1,0 +1,6 @@
+# Flowy browser mode session (labwc). Order matters: rotate the output first,
+# then the on-screen keyboard (reserves its exclusive zone), then chromium
+# maximized in the remaining space.
+wlr-randr --output DSI-2 --transform 270
+wvkbd-mobintl -L 240 &
+/usr/bin/flowy-kiosk &

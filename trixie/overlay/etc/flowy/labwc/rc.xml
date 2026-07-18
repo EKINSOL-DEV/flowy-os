@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<!-- Minimal labwc config for Flowy browser mode: no decorations frills, just
+     a maximized browser above the wvkbd on-screen keyboard. -->
+<labwc_config>
+  <theme><titlebar><layout></layout></titlebar></theme>
+  <placement><policy>automatic</policy></placement>
+</labwc_config>

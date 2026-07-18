@@ -1,10 +1,12 @@
 #!/bin/bash
-# /usr/bin/flowy-weston-launch — pick the weston config by UI mode.
-# Kiosk (default): kiosk-shell, app fullscreen. Browser mode (flag set by
-# POST /display/browser-mode): desktop-shell so chromium keeps its tab/URL
-# bar instead of being forced fullscreen by kiosk-shell.
-CFG=/etc/xdg/weston/weston.ini
+# /usr/bin/flowy-weston-launch — pick the compositor by UI mode.
+# Kiosk (default): weston kiosk-shell. Browser mode: labwc (wlroots) + wvkbd
+# on-screen keyboard — weston 10/14 only speak text-input-v1 while chromium
+# only speaks v3, so an IME OSK can never trigger under weston; wvkbd injects
+# keys via the virtual-keyboard protocol and needs no IME at all.
+# The unit drop-in forces Type=simple (weston's sd_notify is unused): a plain
+# exec keeps one main process and lets cgroup-kill clean up the whole session.
 if [ -f /tmp/flowy-browser-mode ]; then
-    CFG=/etc/xdg/weston/weston-browser.ini
+    exec /usr/bin/labwc -C /etc/flowy/labwc
 fi
-exec /usr/bin/weston --modules=systemd-notify.so --config="$CFG"
+exec /usr/bin/weston --modules=systemd-notify.so --config=/etc/xdg/weston/weston.ini
